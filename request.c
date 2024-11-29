@@ -1,8 +1,30 @@
+#include <stdio.h>
 #include "request.h"
 
-inline void init_queue(QUEUE* pqueue) {
-    pqueue -> first = NULL; 
-    pqueue -> last = NULL;
+void print_request(REQUEST* prequest) {
+    printf("Request:\n");
+    printf("\t\tId: %lu\n", prequest -> id);
+    printf("\t\tClient: %s\n", inet_ntoa(prequest -> client_addr.sin_addr));
+    printf("\t\tFlags: %u\n", prequest -> flags);
+    printf("\t\tOperation code: %u\n", prequest -> operation);
+    printf("\t\tArguments: [");
+    for(int i = 0; i < MAX_ARGUMENTS; ++i) {
+        printf("%ld", prequest -> arguments[i]);
+        if(i != MAX_ARGUMENTS -1){
+            printf(", ");
+        }
+    }
+    printf("]\n");
+}
+
+inline void init_queue(QUEUE* pqueue, size_t _capacity) {
+    pqueue -> first          = NULL; 
+    pqueue -> last           = NULL;
+    pqueue -> size           = 0;
+    pqueue -> producer_count = 0;
+    pqueue -> capacity       = _capacity;
+    pthread_mutex_init( &(pqueue -> lock), NULL);
+    pthread_cond_init( &(pqueue -> consumers_waiting), NULL);
     return;
 }
 
@@ -13,29 +35,56 @@ void delete_queue(QUEUE* pqueue) {
             free(prequest);
         }
     }
+    pthread_mutex_destroy( &(pqueue -> lock) );
+    pthread_cond_destroy( &(pqueue -> consumers_waiting) );
 }
+
+void register_producer(QUEUE* pqueue) {
+    pthread_mutex_lock( &(pqueue -> lock) );
+    ++(pqueue -> producer_count);
+    pthread_mutex_unlock( &(pqueue -> lock) );
+}
+
+void deregister_producer(QUEUE* pqueue) {
+    pthread_mutex_lock( &(pqueue -> lock) );
+    if ( --(pqueue -> producer_count) <= 0) {
+        pthread_cond_broadcast( &(pqueue -> consumers_waiting) );
+    }
+    pthread_mutex_unlock( &(pqueue -> lock) );
+}
+
 int enqueue(QUEUE* pqueue, REQUEST* prequest) {
+    //  If capacity <= 0 <==> queue capacity is limitless
+    if ( (pqueue -> capacity > 0) && (pqueue -> size >= pqueue -> capacity) ) {
+        return -1;   
+    }
+
     QUEUE_ITEM* pqueue_item = (QUEUE_ITEM*) malloc( sizeof(QUEUE_ITEM) );
     if ( !pqueue_item ) {
-        return 0;
+        return -2;
     }
     memcpy(&(pqueue_item->request), prequest, sizeof(REQUEST) );
-    free(prequest);
     _enqueue(pqueue, pqueue_item);
+    return 0;
 }
 
 REQUEST* dequeue(QUEUE* pqueue) {
-    REQUEST* request = (REQUEST*)malloc( sizeof(REQUEST) );
+    QUEUE_ITEM* first = _dequeue(pqueue);
+    if (!first) {
+        return NULL;
+    }
+    REQUEST* request = (REQUEST*) malloc( sizeof(REQUEST) );
     if (!request){
+        perror("Unable to allocate memory for request.\n");
         return NULL;
     } 
-    QUEUE_ITEM* first = _dequeue(pqueue);
     memcpy(request, &(first->request), sizeof(REQUEST) );
     free(first);
     return request;
 }
 
 void _enqueue(QUEUE* pqueue, QUEUE_ITEM* pitem) {
+    pthread_mutex_lock( &(pqueue -> lock) );
     pitem   -> prev = NULL;
     pitem   -> next = pqueue -> last;
     pqueue  -> last = pitem;
@@ -44,10 +93,24 @@ void _enqueue(QUEUE* pqueue, QUEUE_ITEM* pitem) {
         return;
     }
     pqueue -> first = pitem;
+
+    ++(pqueue -> size);
+    pthread_mutex_unlock( &(pqueue -> lock) );
+    pthread_cond_signal( &(pqueue -> consumers_waiting) );
     return;
 }
 
 QUEUE_ITEM* _dequeue(QUEUE* pqueue) {
+    pthread_mutex_lock( &(pqueue -> lock) );  
+    while ( (pqueue -> first == NULL) && (pqueue -> producer_count > 0) ) {
+        printf("Consumer waiting....\n");
+        pthread_cond_wait( &(pqueue -> consumers_waiting), &(pqueue -> lock) );
+    }  
+    printf("Consumer awakened.\n");
+    if ( (pqueue -> first == NULL ) && (pqueue -> producer_count <= 0) ) {
+        printf("Consumer doesn't see any producers. Exiting...\n");
+        return NULL;
+    }
     QUEUE_ITEM* temp = pqueue -> first;
     pqueue  -> first = temp -> prev;
     temp    -> prev  = NULL;
@@ -56,6 +119,8 @@ QUEUE_ITEM* _dequeue(QUEUE* pqueue) {
     } else {
         pqueue -> last = NULL; 
     }
+    --(pqueue -> size);
+    pthread_mutex_unlock( &(pqueue -> lock) );
     return temp;
 }
 
