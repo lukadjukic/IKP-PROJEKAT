@@ -17,7 +17,7 @@ void print_request(REQUEST* prequest) {
     printf("]\n");
 }
 
-inline void init_queue(QUEUE* pqueue, size_t _capacity) {
+void init_queue(QUEUE* pqueue, size_t _capacity) {
     pqueue -> first          = NULL; 
     pqueue -> last           = NULL;
     pqueue -> size           = 0;
@@ -37,6 +37,8 @@ void delete_queue(QUEUE* pqueue) {
     }
     pthread_mutex_destroy( &(pqueue -> lock) );
     pthread_cond_destroy( &(pqueue -> consumers_waiting) );
+    pqueue -> first = NULL;
+    pqueue -> last  = NULL;
 }
 
 void register_producer(QUEUE* pqueue) {
@@ -51,6 +53,47 @@ void deregister_producer(QUEUE* pqueue) {
         pthread_cond_broadcast( &(pqueue -> consumers_waiting) );
     }
     pthread_mutex_unlock( &(pqueue -> lock) );
+}
+
+static void _enqueue(QUEUE* pqueue, QUEUE_ITEM* pitem) {
+    pthread_mutex_lock( &(pqueue -> lock) );
+    pitem   -> prev = NULL;
+    pitem   -> next = pqueue -> last;
+    pqueue  -> last = pitem;
+    if ( pitem -> next ) {
+        pitem   -> next -> prev = pitem; 
+        return;
+    }
+    pqueue -> first = pitem;
+
+    ++(pqueue -> size);
+    pthread_mutex_unlock( &(pqueue -> lock) );
+    pthread_cond_signal( &(pqueue -> consumers_waiting) );
+    return;
+}
+
+static QUEUE_ITEM* _dequeue(QUEUE* pqueue) {
+    pthread_mutex_lock( &(pqueue -> lock) );  
+    while ( (pqueue -> first == NULL) && (pqueue -> producer_count > 0) ) {
+        printf("Consumer waiting....\n");
+        pthread_cond_wait( &(pqueue -> consumers_waiting), &(pqueue -> lock) );
+    }  
+    printf("Consumer awakened.\n");
+    if ( (pqueue -> first == NULL ) && (pqueue -> producer_count <= 0) ) {
+        printf("Consumer doesn't see any producers. Exiting...\n");
+        return NULL;
+    }
+    QUEUE_ITEM* temp = pqueue -> first;
+    pqueue  -> first = temp -> prev;
+    temp    -> prev  = NULL;
+    if ( pqueue -> first ) {
+        pqueue -> first -> next = NULL;        
+    } else {
+        pqueue -> last = NULL; 
+    }
+    --(pqueue -> size);
+    pthread_mutex_unlock( &(pqueue -> lock) );
+    return temp;
 }
 
 int enqueue(QUEUE* pqueue, REQUEST* prequest) {
@@ -81,47 +124,6 @@ REQUEST* dequeue(QUEUE* pqueue) {
     memcpy(request, &(first->request), sizeof(REQUEST) );
     free(first);
     return request;
-}
-
-void _enqueue(QUEUE* pqueue, QUEUE_ITEM* pitem) {
-    pthread_mutex_lock( &(pqueue -> lock) );
-    pitem   -> prev = NULL;
-    pitem   -> next = pqueue -> last;
-    pqueue  -> last = pitem;
-    if ( pitem -> next ) {
-        pitem   -> next -> prev = pitem; 
-        return;
-    }
-    pqueue -> first = pitem;
-
-    ++(pqueue -> size);
-    pthread_mutex_unlock( &(pqueue -> lock) );
-    pthread_cond_signal( &(pqueue -> consumers_waiting) );
-    return;
-}
-
-QUEUE_ITEM* _dequeue(QUEUE* pqueue) {
-    pthread_mutex_lock( &(pqueue -> lock) );  
-    while ( (pqueue -> first == NULL) && (pqueue -> producer_count > 0) ) {
-        printf("Consumer waiting....\n");
-        pthread_cond_wait( &(pqueue -> consumers_waiting), &(pqueue -> lock) );
-    }  
-    printf("Consumer awakened.\n");
-    if ( (pqueue -> first == NULL ) && (pqueue -> producer_count <= 0) ) {
-        printf("Consumer doesn't see any producers. Exiting...\n");
-        return NULL;
-    }
-    QUEUE_ITEM* temp = pqueue -> first;
-    pqueue  -> first = temp -> prev;
-    temp    -> prev  = NULL;
-    if ( pqueue -> first ) {
-        pqueue -> first -> next = NULL;        
-    } else {
-        pqueue -> last = NULL; 
-    }
-    --(pqueue -> size);
-    pthread_mutex_unlock( &(pqueue -> lock) );
-    return temp;
 }
 
 //  FULL QUEUE:

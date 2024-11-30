@@ -9,6 +9,7 @@
 
 #define MAX_ARGUMENTS             10
 #define QUEUE_CAPACITY_UNLIMITED  0
+#define QUEUE_CAPACITY_DEFAULT    10
 
 typedef pthread_mutex_t mutex_t;
 typedef pthread_cond_t  cond_t;
@@ -44,8 +45,6 @@ void        register_producer(QUEUE* pqueue);
 void        deregister_producer(QUEUE* pqueue);
 int         enqueue(QUEUE* pqueue,  REQUEST* prequest);     //  WON'T TAKE  ownership of request (and free it) 
 REQUEST*    dequeue(QUEUE* pqueue);                         //  WILL GIVE   ownership of request (demands freeing)
-void        _enqueue(QUEUE* pqueue, QUEUE_ITEM* pitem);
-QUEUE_ITEM* _dequeue(QUEUE* pqueue);
 
 #endif
 
