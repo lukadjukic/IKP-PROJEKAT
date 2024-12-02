@@ -3,25 +3,25 @@
 #include <unistd.h>
 #include "direcive.h"
 
-static inline unsigned char index_out_of_range(size_t index, size_t workers_count) {
+static inline unsigned char index_out_of_range(const size_t index, const size_t workers_count) {
     return ( (index < 0) || (index > workers_count -1) );
 }
 
-static inline unsigned char increment_too_big(size_t increment, size_t max_increment) {
+static inline unsigned char increment_too_big(const size_t increment, const size_t max_increment) {
     return (increment > max_increment);
 }
 
-static inline unsigned char capacity_too_big(size_t capacity, size_t increment) {
+static inline unsigned char capacity_too_big(const size_t capacity, const size_t increment) {
     return (capacity + increment < capacity); 
 }
 
-void coordinate(coordination_t * coordination, COORDINATION_FLAGS new_state) {
+void coordinate(coordination_t * const coordination, const coordination_flags_t new_state) {
     pthread_mutex_lock( &(coordination -> lock) );
-    coordination -> flag = new_state;
+    coordination -> state = new_state;
     pthread_mutex_unlock( &(coordination -> lock) );
 }
 
-void print_directive(directive_t * directive) {
+void print_directive(const directive_t * const directive) {
     printf("Directive:\n");
     printf("\tDirective: ");
     switch ( directive -> dir) {
@@ -44,7 +44,7 @@ void print_directive(directive_t * directive) {
     printf("\tParameters: id = %lu, capacity = %lu\n", directive -> params.id, directive -> params.capacity);
 }
 
-ssize_t handle_directive(QUEUE * queues, size_t workers_count, coordination_t * coordinate, directive_t * directive) {
+ssize_t handle_directive(QUEUE * const queues, const size_t workers_count, coordination_t * const coordinate, const directive_t * const directive) {
     ssize_t result;
 
     switch (directive -> dir) {
@@ -68,33 +68,33 @@ ssize_t handle_directive(QUEUE * queues, size_t workers_count, coordination_t * 
     return result;
 }
 
-ssize_t handle_halt(coordination_t * coordination){
+ssize_t handle_halt(coordination_t * const coordination){
     coordinate(coordination, COORD_HALT);
-    return 1;
+    return DIRECTIVE_SUCCESS;
 }
 
-ssize_t handle_thread_stop(QUEUE * queues, size_t workers_count, size_t id) {
-    QUEUE * queue  = queues + id;
+ssize_t handle_thread_stop(queue_t * const queues, const size_t workers_count, const size_t id) {
+    queue_t * const queue  = queues + id;
     if ( index_out_of_range(id, workers_count) ) {
         return INDEX_OUT_OF_RANGE;
     }
     stop_queue(queue);
-    return 1;
+    return DIRECTIVE_SUCCESS;
 }
 
-ssize_t handle_thread_continue(QUEUE * queues, size_t workers_count, size_t id) {
-    QUEUE * queue  = queues + id;
+ssize_t handle_thread_continue(queue_t * const queues, const size_t workers_count, const size_t id) {
+    queue_t * const queue  = queues + id;
     if ( index_out_of_range(id, workers_count) ) {
         return INDEX_OUT_OF_RANGE;
     }
     resume_queue(queue);
-    return 1;
+    return DIRECTIVE_SUCCESS;
 }
 
-ssize_t handle_thread_increase_capacity(QUEUE * queues, size_t workers_count, parameters_t * parameters) {
-    size_t  increment = parameters -> capacity;
-    size_t  index     = parameters -> id;
-    QUEUE * queue     = queues + index;
+ssize_t handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const parameters_t * const parameters) {
+    const size_t    increment = parameters -> capacity;
+    const size_t    index     = parameters -> id;
+    queue_t * const queue     = queues + index;
     
     if ( index_out_of_range(index, workers_count) ) {
         return INDEX_OUT_OF_RANGE;
@@ -108,6 +108,4 @@ ssize_t handle_thread_increase_capacity(QUEUE * queues, size_t workers_count, pa
 
     return increment_queue_capacity(queue, increment);
 }
-
-
 

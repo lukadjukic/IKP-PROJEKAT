@@ -15,7 +15,7 @@ int main() {
     struct sockaddr_in server_addr;
     ssize_t result;
     directive_t directive;
-    directive.dir = DIR_THREAD_CONTINUE;
+    directive.dir = DIR_HALT;
     directive.params.capacity = 15;
     directive.params.id = 0;
 
