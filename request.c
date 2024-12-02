@@ -23,6 +23,7 @@ void init_queue(QUEUE* pqueue, size_t _capacity) {
     pqueue -> size           = 0;
     pqueue -> producer_count = 0;
     pqueue -> capacity       = _capacity;
+    pqueue -> flags          = QUEUE_INITIALIZED;
     pthread_mutex_init( &(pqueue -> lock), NULL);
     pthread_cond_init( &(pqueue -> consumers_waiting), NULL);
     return;
@@ -43,6 +44,7 @@ void delete_queue(QUEUE* pqueue) {
 
 void register_producer(QUEUE* pqueue) {
     pthread_mutex_lock( &(pqueue -> lock) );
+    (pqueue -> flags) |= QUEUE_STARTED;
     ++(pqueue -> producer_count);
     pthread_mutex_unlock( &(pqueue -> lock) );
 }
@@ -74,13 +76,13 @@ static void _enqueue(QUEUE* pqueue, QUEUE_ITEM* pitem) {
 
 static QUEUE_ITEM* _dequeue(QUEUE* pqueue) {
     pthread_mutex_lock( &(pqueue -> lock) );  
-    while ( (pqueue -> first == NULL) && (pqueue -> producer_count > 0) ) {
-        printf("Consumer waiting....\n");
+    while ( !(pqueue -> flags & QUEUE_STARTED) || ( (pqueue -> first == NULL) && (pqueue -> producer_count > 0) ) ) {
+        // printf("Consumer waiting....\n");
         pthread_cond_wait( &(pqueue -> consumers_waiting), &(pqueue -> lock) );
     }  
-    printf("Consumer awakened.\n");
+    // printf("Consumer awakened.\n");
     if ( (pqueue -> first == NULL ) && (pqueue -> producer_count <= 0) ) {
-        printf("Consumer doesn't see any producers. Exiting...\n");
+        //printf("Consumer doesn't see any producers. Exiting...\n");
         return NULL;
     }
     QUEUE_ITEM* temp = pqueue -> first;
@@ -124,6 +126,33 @@ REQUEST* dequeue(QUEUE* pqueue) {
     memcpy(request, &(first->request), sizeof(REQUEST) );
     free(first);
     return request;
+}
+
+size_t increment_queue_capacity(QUEUE * pqueue, size_t increment) {
+    pthread_mutex_lock( &(pqueue -> lock) );
+    pqueue -> capacity += increment;
+    size_t capacity = pqueue -> capacity;  
+    pthread_mutex_unlock( &(pqueue -> lock) );  
+    return capacity;
+}
+
+void stop_queue(QUEUE * pqueue) {
+    pthread_mutex_lock( &(pqueue -> lock) );
+    pqueue -> flags |= QUEUE_STOPPED;
+    pthread_mutex_unlock( &(pqueue -> lock) );      
+}
+
+void resume_queue(QUEUE * pqueue) {
+    pthread_mutex_lock( &(pqueue -> lock) );
+    pqueue -> flags &= ~QUEUE_STOPPED;
+    pthread_mutex_unlock( &(pqueue -> lock) );    
+}
+
+unsigned char is_queue_stopped(QUEUE * pqueue) {
+    pthread_mutex_lock( &(pqueue -> lock) );
+    unsigned char stopped =  pqueue -> flags & QUEUE_STOPPED; 
+    pthread_mutex_unlock( &(pqueue -> lock) );    
+    return stopped;
 }
 
 //  FULL QUEUE:
