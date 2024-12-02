@@ -11,6 +11,23 @@ static void                 fill_request(request_t * const prequest, const socka
 
 #pragma endregion
 
+#pragma region sender_definitions
+
+static void send_processed_request(const request_t * const request, const int server_socket);
+
+#pragma endregion
+
+#pragma region load_balancer_definitions
+
+static int                  find_first_free_worker(queue_t * worker_queues, const size_t workers_count);
+static int                  select_worker(queue_t * worker_queues, const size_t workers_count);
+static void                 register_to_worker_queues(queue_t * const queues, const size_t workers_count);
+static void                 deregister_to_worker_queues(queue_t * const queues, const size_t workers_count);
+static void                 balance(queue_t * const input, queue_t * const worker_queues, const size_t workers_count);
+static inline unsigned char is_valid_id(const int id, const ssize_t workers_count);
+
+#pragma endregion
+
 #pragma region admin_definitions
 
 static void                  init_listener_socket(int * const listener_socket, int * const error_code, const int port);
@@ -75,7 +92,12 @@ static unsigned char recieved_valid_request(request_t * const prequest, size_t *
 
 static void fill_request(request_t * const prequest, const sockaddr_in_t * const client_address, const size_t id) {
     memcpy(&(prequest -> client_addr), client_address, sizeof(sockaddr_in_t));
-    prequest -> id = id;
+    prequest -> id            = id;
+    prequest -> flags.handled = 0;
+    prequest -> flags.invalid = 0;
+    prequest -> flags.stopped = 0;
+    prequest -> flags.padding = 0;
+    prequest -> result        = 0;
 }
 
 static int recieve_request(request_t * const buffer, sockaddr_in_t * const client_address, socklen_t * const address_length, const int server_socket ) {
@@ -305,6 +327,12 @@ static int bind_server_socket(const sockaddr_in_t * const server_address, const 
 
 #pragma region queues_and_threads 
 
+void safe_dealocalte(void * ptr) {
+    if (ptr)
+        free(ptr);
+    ptr = NULL;
+}
+
 void init_queues(QUEUE * const queues, const unsigned short queues_count) {
     for ( int i = 0; i < queues_count; ++i ) {
         if ( i < 2) {
@@ -330,6 +358,107 @@ void join_all_threads(const pthread_t * const threads, const unsigned short thre
 int close_program(QUEUE * const queues, const unsigned short queues_count, const int server_socket) {
     delete_all_queues(queues, queues_count);
     return close(server_socket);
+}
+
+
+#pragma endregion
+
+#pragma region sender
+
+void sender(queue_t * const pqueue, const int server_socket) {
+    request_t * request; 
+    while (1) {
+        request = dequeue(pqueue);
+        
+        if (!request) {
+            break;
+        }
+    
+        send_processed_request(request, server_socket);
+        safe_dealocalte((void *)request);
+    }
+}
+
+static void send_processed_request(const request_t * const request, const int server_socket){
+    ssize_t      sent_length ;
+    sockaddr_t * client_address;  
+    
+    client_address = (sockaddr_t *)  &(request -> client_addr);
+    sent_length    =  sendto(server_socket, request, sizeof(request_t), 0, client_address, sizeof(sockaddr_in_t)) ;
+    
+    if( sent_length < 0){
+        perror("Send failed.\n");
+    }
+}
+
+#pragma endregion
+
+#pragma region load_balancer
+
+void load_balancer(queue_t * const input,queue_t * const worker_queues) {
+    register_to_worker_queues(worker_queues, WORKER_NUMBER);
+    balance(input, worker_queues, WORKER_NUMBER);
+    deregister_to_worker_queues(worker_queues, WORKER_NUMBER);
+}
+
+static void balance(queue_t * const input, queue_t * const worker_queues, const size_t workers_count){
+    while(1) {
+        request_t * request = dequeue(input);
+        if (!request) {
+            return;
+        }
+
+        int selected_worker = select_worker(worker_queues, workers_count);
+        
+        printf("[Load Balancer] Request id: %lu assigned to thread %d.\n",request -> id , selected_worker);    
+        enqueue(worker_queues + selected_worker, request);
+        safe_dealocalte(request);
+    }
+} 
+
+int select_worker(queue_t * worker_queues, const size_t workers_count) {
+    int selected_worker = -1;
+    
+    while (1) {
+        selected_worker = find_first_free_worker(worker_queues, workers_count);
+        
+        if ( is_valid_id(selected_worker, workers_count) ) {
+            return selected_worker;
+        }
+        
+        sleep(1);
+    }
+}
+
+int find_first_free_worker(queue_t * worker_queues, const size_t workers_count) {
+    size_t capacity, size, i;
+    queue_flags_t flags;
+
+    for ( i = 0;  i < workers_count; ++i) {
+        capacity = worker_queues[i].capacity;
+        size     = worker_queues[i].size;
+        if ( (!capacity || size < capacity) && !is_queue_stopped(worker_queues + i) ) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static inline unsigned char is_valid_id(const int id, const ssize_t workers_count) {
+    return (id >= 0) && (id < workers_count);
+}
+
+static void register_to_worker_queues(queue_t * const queues, const size_t workers_count) {
+    for (int i = 0; i < workers_count; ++i) {
+        register_producer(queues + i);
+    }
+}
+
+static void deregister_to_worker_queues(queue_t * const queues, const size_t workers_count) {
+    for (int i = 0; i < workers_count; ++i) {
+        deregister_producer(queues + i);
+    }
+
 }
 
 

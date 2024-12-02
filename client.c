@@ -16,7 +16,6 @@ int main() {
 
     REQUEST r;
     r.id = 0;
-    r.flags = 0;
     r.operation = 1;
     memset(&r.arguments, 0, MAX_ARGUMENTS*sizeof(long));
     print_request(&r);

@@ -14,11 +14,19 @@ typedef pthread_cond_t      cond_t;
 typedef struct sockaddr_in  sockaddr_in_t;
 typedef struct sockaddr     sockaddr_t;
 
+typedef struct {
+    unsigned char stopped : 1;
+    unsigned char invalid : 1;
+    unsigned char handled : 1;
+    unsigned char padding : 5;
+} request_flags_t;
+
 typedef struct request_t {
     size_t              id;
-    unsigned char       flags;
+    request_flags_t     flags;
     unsigned char       operation;
     ssize_t             arguments[MAX_ARGUMENTS];
+    ssize_t             result;
     sockaddr_in_t       client_addr;
 } request_t;
 

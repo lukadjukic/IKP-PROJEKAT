@@ -1,80 +1,62 @@
 #include "server_helper.h"
 
-void sender(QUEUE* pqueue, int sock) {
-    while (1) {
-        REQUEST* req = dequeue(pqueue);
-        if (!req) {
+unsigned char validate_request(request_t * request) {
+    if (request -> flags.stopped)
+        return 0;
+    if (request -> operation > 3) {
+        request -> flags.invalid = 1;
+        return 0;
+    }
+
+    return 1;
+}
+
+
+//
+//  TODO: IMPLEMENT
+//
+void proccess(request_t * request){
+    if ( !validate_request(request) ) {
+        return;
+    }
+
+    switch (request -> operation) {
+        case 0:
             break;
-        }
-        sockaddr_in_t* client_addr = &(req -> client_addr); 
-        if( sendto(sock, req, sizeof(REQUEST), 0, (struct sockaddr*)client_addr, sizeof(sockaddr_in_t)) < 0){
-            perror("Send failed.\n");
-            continue;
-        }
-        free(req);
-        req = NULL;
-    }
-}
-
-int balance_load(QUEUE* worker_queues) {
-    register size_t capacity, size, i;
-    while (1) {
-        for ( i = 0;  i < WORKER_NUMBER; ++i) {
-            capacity = worker_queues[i].capacity;
-            size     = worker_queues[i].size;
-            if ( !capacity || size < capacity) {
-                return i;
-            }
-        }
-        sleep(1);
-    }
-}
-
-void load_balancer(QUEUE* input, QUEUE* worker_queues) {
-    for (int i = 0; i < WORKER_NUMBER; ++i) {
-        register_producer(worker_queues + i);
-    }
-    int i;
-    while(1) {
-        REQUEST* req = dequeue(input);
-        if (!req) {
+        case 1:
             break;
-        }
-        //  Should balance between multiple queues
-        i = balance_load(worker_queues);
-        printf("[Load Balancer] Request id: %lu assignes request to thread %d.\n",req -> id ,i);    
-        enqueue(worker_queues + i, req);
-        free(req);
-        req = NULL;
-    }
-    for (int i = 0; i < WORKER_NUMBER; ++i) {
-        deregister_producer(worker_queues + i);
+        case 2:
+            break;
+        case 3:
+            break;
+        default:
+            break;
     }
 }
 
-void worker(QUEUE* input, QUEUE* output, int id) {
+void worker(queue_t * const input, queue_t * const output, const int id) {
     register_producer(output);
     while (1) {
-        REQUEST* req = dequeue(input);
-        if (!req) {
+        REQUEST* request = dequeue(input);
+        if (!request) {
             break;
         }
-        if ( is_queue_stopped(input) ) {
-            req -> flags = 1;
-        } else {
-            req -> flags = 2;
-        }
-        printf("[Worker %d] Worker handled request id: %lu.\n", id, req -> id);
-        enqueue(output, req);
-        free(req);
-        req = NULL;
+
+        if (is_queue_stopped(input)) {
+            request -> flags.stopped = 1;    
+        }        
+        proccess(request);
+
+        printf("[Worker %d] Worker handled request id: %lu.\n", id, request -> id);
+        enqueue(output, request);
+        safe_dealocalte((void *)request);
     }
     deregister_producer(output);
 }
 
 
 //  Wrapper functions
-void* _reciever(void* arg) {
+void * _reciever(void * arg) {
     printf("[DEBUG] Reciever thread started.\n");
     struct arguments_t* arguments =  ( struct arguments_t * ) arg;
     reciever(arguments -> output, arguments -> coordination, arguments -> num);
@@ -82,7 +64,7 @@ void* _reciever(void* arg) {
     return NULL;
 }
 
-void* _load_balancer(void* arg) {
+void * _load_balancer(void * arg) {
     struct arguments_t* arguments = ( struct arguments_t * ) arg;
     printf("[DEBUG] Load balancer thread started.\n");
     load_balancer(arguments -> input, arguments -> output);
@@ -90,7 +72,7 @@ void* _load_balancer(void* arg) {
     return NULL;
 }
 
-void* _worker(void* arg) {
+void * _worker(void * arg) {
     struct arguments_t * arguments = ( struct arguments_t * ) arg;
     int i = arguments -> num;
     printf("[DEBUG] Worker id: %d started.\n", i);
@@ -98,7 +80,7 @@ void* _worker(void* arg) {
     printf("[DEBUG] Worker id: %d finished.\n", i);
 }
 
-void* _sender(void* arg) {
+void * _sender(void * arg) {
     struct arguments_t* arguments =  ( struct arguments_t * ) arg;
     printf("[DEBUG] Sender thread started.\n");
     sender( arguments -> input, arguments -> num );
@@ -106,8 +88,8 @@ void* _sender(void* arg) {
     return NULL;
 }
 
-void * _admin(void * params) {
-    arguments_t * arguments = (arguments_t *) params; 
+void * _admin(void * arg) {
+    arguments_t * arguments = (arguments_t *) arg; 
     printf("[DEBUG] Admin thread started.\n");
     admin(arguments);
     printf("[DEBUG] Admin thread finished.\n");

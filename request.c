@@ -16,7 +16,7 @@ void print_request(const request_t * const  prequest) {
     printf("Request:\n");
     printf("\tId:\t\t%lu\n", prequest -> id);
     printf("\tClient:\t\t%s\n", inet_ntoa(prequest -> client_addr.sin_addr));
-    printf("\tFlags:\t\t%u\n", prequest -> flags);
+    printf("\tFlags:\t\tS=%u I=%u H=%u \n", prequest -> flags.stopped, prequest -> flags.invalid, prequest -> flags.handled);
     printf("\tOperation code:\t%u\n", prequest -> operation);
     print_array(prequest -> arguments, MAX_ARGUMENTS);
 }
@@ -188,9 +188,7 @@ void resume_queue(queue_t * const pqueue) {
 }
 
 unsigned char is_queue_stopped(queue_t *const pqueue) {
-    pthread_mutex_lock( &(pqueue -> lock) );
     unsigned char stopped =  pqueue -> flags & QUEUE_STOPPED; 
-    pthread_mutex_unlock( &(pqueue -> lock) );    
     return stopped;
 }
 

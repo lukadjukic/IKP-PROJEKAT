@@ -41,10 +41,13 @@ typedef struct arguments_t {
 } arguments_t;
 
 int  init_socket(const int type, const int protocol, const unsigned short port);
-void admin(arguments_t * const arguments);
-void reciever(queue_t * const pqueue,  coordination_t * const coordination, const int server_socket);
 void init_queues(QUEUE * const queues, const unsigned short queues_count);
 void join_all_threads(const pthread_t * const threads, const unsigned short thread_count);
 int  close_program(QUEUE * const queues, const unsigned short queues_count, const int server_socket);
+void safe_dealocalte(void * ptr);
+void reciever(queue_t * const pqueue,  coordination_t * const coordination, const int server_socket);
+void sender(queue_t * const pqueue, const int server_socket);
+void load_balancer(queue_t * const input,queue_t * const worker_queues);
+void admin(arguments_t * const arguments);
 
 #endif
