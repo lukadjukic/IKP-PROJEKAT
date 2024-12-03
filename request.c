@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "queue.h"
 
+#pragma region requests
+
 static void print_array(const ssize_t const * array, const size_t array_length) {
     printf("\tArguments:\t[");
     for(size_t i = 0; i < array_length; ++i) {
@@ -19,7 +21,12 @@ void print_request(const request_t * const  prequest) {
     printf("\tFlags:\t\tS=%u I=%u H=%u \n", prequest -> flags.stopped, prequest -> flags.invalid, prequest -> flags.handled);
     printf("\tOperation code:\t%u\n", prequest -> operation);
     print_array(prequest -> arguments, MAX_ARGUMENTS);
+    printf("\tResult:\t\t%ld\n", prequest -> result);
 }
+
+#pragma endregion
+
+#pragma region init_delete_register_deregister
 
 void init_queue(queue_t * const pqueue, const size_t _capacity) {
     pqueue -> first          = NULL; 
@@ -66,6 +73,15 @@ void deregister_producer(queue_t * const pqueue) {
     pthread_mutex_unlock( &(pqueue -> lock) );
 }
 
+#pragma endregion
+
+#pragma region enqueue
+
+static inline unsigned char is_queue_full(const queue_t * const pqueue) {
+    //  If capacity == 0 <==> queue capacity is limitless
+    return (pqueue -> capacity > 0) && (pqueue -> size >= pqueue -> capacity); 
+}
+
 static void enqueue_handle_pointers(queue_t * const pqueue, queue_item_t * const pitem) {
     pitem   -> prev = NULL;
     pitem   -> next = pqueue -> last;
@@ -84,6 +100,25 @@ static void enqueue_item(queue_t * const pqueue, queue_item_t * const pitem) {
     pthread_mutex_unlock( &(pqueue -> lock) );
     pthread_cond_signal( &(pqueue -> consumers_waiting) );
 }
+
+int enqueue(queue_t * const pqueue, const request_t * const prequest) {
+    if ( is_queue_full(pqueue) ) {
+        return QUEUE_FULL;   
+    }
+
+    queue_item_t * pqueue_item = (queue_item_t *) malloc( sizeof(queue_item_t) );
+    if ( !pqueue_item ) {
+        return OUT_OF_MEMORY;
+    }
+
+    memcpy(&(pqueue_item->request), prequest, sizeof(request_t) );
+    enqueue_item(pqueue, pqueue_item);
+    return SUCCESS;
+}
+
+#pragma endregion
+
+#pragma region dequeue
 
 static void dequeue_handle_pointers(queue_t * const pqueue, queue_item_t * const temp) {
     pqueue  -> first = temp -> prev;
@@ -129,26 +164,6 @@ static queue_item_t * dequeue_item(queue_t * const pqueue) {
     return temp;
 }
 
-static inline unsigned char is_queue_full(const queue_t * const pqueue) {
-    //  If capacity == 0 <==> queue capacity is limitless
-    return (pqueue -> capacity > 0) && (pqueue -> size >= pqueue -> capacity); 
-}
-
-int enqueue(queue_t * const pqueue, const request_t * const prequest) {
-    if ( is_queue_full(pqueue) ) {
-        return QUEUE_FULL;   
-    }
-
-    queue_item_t * pqueue_item = (queue_item_t *) malloc( sizeof(queue_item_t) );
-    if ( !pqueue_item ) {
-        return OUT_OF_MEMORY;
-    }
-
-    memcpy(&(pqueue_item->request), prequest, sizeof(request_t) );
-    enqueue_item(pqueue, pqueue_item);
-    return SUCCESS;
-}
-
 request_t * dequeue(queue_t * const pqueue) {
     queue_item_t * first = dequeue_item(pqueue);
     if (!first) {
@@ -166,6 +181,10 @@ request_t * dequeue(queue_t * const pqueue) {
     first = NULL;
     return request;
 }
+
+#pragma endregion
+
+#pragma region admin_options
 
 size_t increment_queue_capacity(queue_t * const pqueue, const size_t increment) {
     pthread_mutex_lock( &(pqueue -> lock) );
@@ -192,10 +211,11 @@ unsigned char is_queue_stopped(queue_t *const pqueue) {
     return stopped;
 }
 
+#pragma endregion
+
 //  FULL QUEUE:
 //  NULL <- 0 <-> 1 <-> 2 <-> 3 <-> 4 <-> 5 -> NULL 
 //          ^ last                        ^ first
-
 
 // EMPTY QUEUE:
 //  NULL    NULL

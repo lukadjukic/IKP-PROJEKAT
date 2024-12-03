@@ -49,5 +49,6 @@ void reciever(queue_t * const pqueue,  coordination_t * const coordination, cons
 void sender(queue_t * const pqueue, const int server_socket);
 void load_balancer(queue_t * const input,queue_t * const worker_queues);
 void admin(arguments_t * const arguments);
+void worker(queue_t * const input, queue_t * const output, const int id);
 
 #endif

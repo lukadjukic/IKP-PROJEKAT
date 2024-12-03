@@ -44,6 +44,18 @@ static ssize_t               get_result(arguments_t * const arguments, const  di
 
 #pragma endregion
 
+#pragma region worker_definitions
+
+static unsigned char process_single_request(queue_t * queue, request_t * request);
+static void          proccess(request_t * request);
+static unsigned char validate_request(request_t * request);
+static ssize_t       operation_0(const ssize_t * const arguments);
+static ssize_t       operation_1(const ssize_t * const arguments);
+static ssize_t       operation_2(const ssize_t * const arguments);
+static ssize_t       operation_3(const ssize_t * const arguments);
+
+#pragma endregion
+
 #pragma region socket_functions_definitions
 
 static int  create_socket(const int type, const int protocol);
@@ -138,6 +150,8 @@ void admin(arguments_t * const arguments) {
     }
 
     communicate_with_admins(arguments, listener_socket);
+
+    shutdown(listener_socket, SHUT_RDWR);
     close(listener_socket);
 }
 
@@ -231,7 +245,9 @@ static ssize_t recieve_and_validate_directive(directive_t * const buffer, const 
     ssize_t error = INVALID_DIRECTIVE;
     ssize_t recieved_data_length;
     
+    printf("HERE\n");
     recieved_data_length = recv(admin_socket, buffer, sizeof(directive_t), 0);
+    print_directive(buffer);
 
     if (recieved_data_length == 0) {
         printf("[Admin] Disconnected.\n");
@@ -464,4 +480,94 @@ static void deregister_to_worker_queues(queue_t * const queues, const size_t wor
 
 #pragma endregion
 
+#pragma region worker
 
+void worker(queue_t * const input, queue_t * const output, const int id) {
+    register_producer(output);
+    while (1) {
+        REQUEST* request = dequeue(input);
+        if( !process_single_request(input, request) ){
+            break;
+        }
+        printf("[Worker %d] Worker handled request id: %lu.\n", id, request -> id);
+        enqueue(output, request);
+        safe_dealocalte((void *)request);
+    }
+    deregister_producer(output);
+}
+
+unsigned char process_single_request(queue_t * queue, request_t * request) {
+    if (!request) {
+        return 0;
+    }
+
+    if (is_queue_stopped(queue)) {
+        request -> flags.stopped = 1; 
+        return 1;   
+    }
+
+    proccess(request);
+    return 1;
+}
+
+void proccess(request_t * request){
+    if ( !validate_request(request) ) {
+        return;
+    }
+
+    switch (request -> operation) {
+        case 0:
+            request -> result = operation_0(request -> arguments);
+            break;
+        case 1:
+            request -> result = operation_1(request -> arguments);        
+            break;
+        case 2:
+            request -> result = operation_2(request -> arguments);
+            break;
+        case 3:
+            request -> result = operation_3(request -> arguments);
+            break;
+        default:
+            break;
+    }
+    request -> flags.handled = 1;
+}
+
+unsigned char validate_request(request_t * request) {
+    // print_request(request);
+    if (request -> flags.stopped)
+        return 0;
+    if (request -> operation > 3) {
+        request -> flags.invalid = 1;
+        return 0;
+    }
+
+    return 1;
+}
+
+ssize_t operation_0(const ssize_t * const arguments) {
+    size_t argument = (size_t) arguments[0];
+    return (argument * argument++) >> 1;
+}
+
+ssize_t operation_1(const ssize_t * const arguments) {
+    ssize_t      argument = arguments[0];
+    const size_t mask     = argument >> (sizeof(ssize_t) * 0x08 -1);
+    return (argument + mask) ^ mask;
+}
+
+ssize_t operation_2(const ssize_t * const arguments) {
+    ssize_t result = 0;
+    for (int i = 0; i < MAX_ARGUMENTS; ++i) {
+        result ^= arguments[i];
+    }
+    return result;
+}
+
+ssize_t operation_3(const ssize_t * const arguments) {
+    ssize_t result = arguments[0];
+    return ~result + 1;
+}
+
+#pragma endregion

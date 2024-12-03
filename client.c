@@ -16,8 +16,11 @@ int main() {
 
     REQUEST r;
     r.id = 0;
-    r.operation = 1;
+    r.operation = -1;
     memset(&r.arguments, 0, MAX_ARGUMENTS*sizeof(long));
+    r.arguments[0] = 0;
+    r.arguments[1] = 3;
+    r.arguments[2] = 10;
     print_request(&r);
 
     char *message = (char*)&r;
