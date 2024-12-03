@@ -8,6 +8,7 @@ static unsigned char        recieved_valid_request(request_t * const prequest, s
 static inline unsigned char would_block(const ssize_t recieved_length);
 static int                  recieve_request(request_t * const buffer, sockaddr_in_t * const client_address, socklen_t * const address_length, const int server_socket );
 static void                 fill_request(request_t * const prequest, const sockaddr_in_t * const client_address, const size_t id);
+static inline void          send_id(const int server_socket, const size_t * counter, const sockaddr_in_t * client_address );
 
 #pragma endregion
 
@@ -98,8 +99,13 @@ static unsigned char recieved_valid_request(request_t * const prequest, size_t *
     }
 
     fill_request(prequest, &client_address, ++(*counter));
+    send_id(server_socket, counter, &client_address);
     printf("[Reciever] Client: %s:%u sent request. Assigned id: %lu\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), prequest -> id);
     return RECIEVE_SUCCESS;
+}
+
+static inline void send_id(const int server_socket, const size_t * counter, const sockaddr_in_t * client_address ) {
+    sendto(server_socket, counter, sizeof(size_t), 0, (sockaddr_t *) client_address, sizeof(sockaddr_t) );    
 }
 
 static void fill_request(request_t * const prequest, const sockaddr_in_t * const client_address, const size_t id) {
@@ -245,9 +251,7 @@ static ssize_t recieve_and_validate_directive(directive_t * const buffer, const 
     ssize_t error = INVALID_DIRECTIVE;
     ssize_t recieved_data_length;
     
-    printf("HERE\n");
     recieved_data_length = recv(admin_socket, buffer, sizeof(directive_t), 0);
-    print_directive(buffer);
 
     if (recieved_data_length == 0) {
         printf("[Admin] Disconnected.\n");
