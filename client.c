@@ -14,29 +14,48 @@ int           create_socket();
 int           send_request_recieve_id(request_t * const request, const sockaddr_in_t * server_address, const int client_socket);
 void          recieve_response(request_t * const request, const sockaddr_in_t * const server_address, const int client_socket);
 void          set_server_address(sockaddr_in_t * address);
-unsigned char fill_request(request_t * const request);
+unsigned char fill_request(request_t * const request, FILE * file);
+FILE *        safe_fopen(const char * const filename, const char * const modes);
+void          safe_fclose(FILE * file);
+void          print_response(const request_t * const request, FILE * file);
 
 int main() {
     int           sock;
     sockaddr_in_t server_address;
     request_t     request;
+    FILE *        in_file; 
+    FILE *        out_file;
+
+    const char * const in_filename = "input.txt";
+    const char * const out_filename = "output.txt";    
+
+    out_file = safe_fopen(out_filename, "w+"); 
+    in_file  = safe_fopen(in_filename, "r+");
     
     sock = create_socket();
+
     if (sock < 0) {
+        safe_fclose(in_file);
+        safe_fclose(out_file);
         return -1;
     }
 
-    while (fill_request(&request)){
+    while (fill_request(&request, in_file)){
         set_server_address(&server_address);
         if (send_request_recieve_id(&request, &server_address, sock)  < 0) {
             break;
         }
-
-        recieve_response(&request, &server_address, sock);
     }
 
-    
+    while ( counter--){
+        recieve_response(&request, &server_address, sock);
+        print_response(&request, out_file);
+    }
+
     close(sock);
+    safe_fclose(in_file);
+    safe_fclose(out_file);
+
     return 0;
 }
 
@@ -70,6 +89,7 @@ int  send_request_recieve_id(request_t * const request, const sockaddr_in_t * se
         return -1;
     }
 
+    ++counter;
     return 1;
 }
 
@@ -84,10 +104,38 @@ void recieve_response(request_t * const request, const sockaddr_in_t * const ser
     print_request(request);
 }
 
-unsigned char fill_request(request_t * const request){
+unsigned char fill_request(request_t * const request, FILE * file){
     memset((void *)request, 0, sizeof(request_t));
-    request -> operation = 3;
-    request -> arguments[0] = -10;
     
-    return !counter++;
+    if ( fscanf(file, "%hhu ", &(request -> operation)) != 1  ){
+        return 0;
+    }
+
+    for (int i = 0; i < MAX_ARGUMENTS; ++i) {
+        if ( fscanf(file,"%ld ", &(request -> arguments[i])) != 1 )
+            return 0;
+        fscanf(file, "\n");
+    }
+    
+    return 1;
+}
+
+void print_response(const request_t * const request, FILE * file) {
+    fprintf(file,"%lu %hhu %u %u %u %ld\n", request -> id, request -> operation, request -> flags.stopped, request -> flags.invalid, request -> flags.handled, request -> result);
+} 
+
+FILE* safe_fopen(const char * const filename, const char * const modes) {
+    FILE* file = fopen(filename, modes);
+    if ( !file ) {
+        perror("Could not open the specified file with the specified modes.\n");
+        exit(EXIT_FAILURE);
+    }
+    return file;
+}
+
+void safe_fclose(FILE * file) {
+    if (file) {
+        fclose(file);
+        file = NULL;
+    }
 }
