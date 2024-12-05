@@ -26,6 +26,14 @@
 #define THREAD_NUMBER           (WORKER_NUMBER + 3)
 
 
+typedef struct threads_t {
+    pthread_t * reciever_thread;
+    pthread_t * load_balancer_thread;
+    pthread_t * sender_thread;
+    pthread_t * admin_thread;
+    pthread_t * worker_threads;
+    size_t      workers_count;
+} threads_t;
 
 typedef enum {
     CONNECTION_PERSIST      = 0,
@@ -42,8 +50,10 @@ typedef struct arguments_t {
 
 int  init_socket(const int type, const int protocol, const unsigned short port);
 void init_queues(QUEUE * const queues, const unsigned short queues_count);
-void join_all_threads(const pthread_t * const threads, const unsigned short thread_count);
-int  close_program(QUEUE * const queues, const unsigned short queues_count, const int server_socket);
+void init_coordination(coordination_t * const coordination);
+void delete_coordination(coordination_t * const coordination);
+void delete_all_queues(QUEUE * const queues, const unsigned short queues_count);
+void join_all_threads(const threads_t const * all_threads);
 void safe_dealocalte(void * ptr);
 void reciever(queue_t * const pqueue,  coordination_t * const coordination, const int server_socket);
 void sender(queue_t * const pqueue, const int server_socket);

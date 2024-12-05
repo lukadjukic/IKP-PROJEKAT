@@ -106,6 +106,7 @@ ssize_t handle_thread_increase_capacity(queue_t * const queues, const size_t wor
         return CAPACITY_TOO_BIG;
     }
 
-    return increment_queue_capacity(queue, increment);
+    increment_queue_capacity(queue, increment);
+    return DIRECTIVE_SUCCESS;
 }
 

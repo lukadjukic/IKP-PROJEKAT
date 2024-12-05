@@ -347,6 +347,17 @@ static int bind_server_socket(const sockaddr_in_t * const server_address, const 
 
 #pragma region queues_and_threads 
 
+void init_coordination(coordination_t * const coordination) {
+    pthread_mutex_init( &(coordination -> lock), NULL);
+    coordination -> state = COORD_START;
+
+}
+
+void delete_coordination(coordination_t * const coordination) {
+    coordination -> state = COORD_HALT;
+    pthread_mutex_destroy( &(coordination -> lock) );
+}
+
 void safe_dealocalte(void * ptr) {
     if (ptr)
         free(ptr);
@@ -369,17 +380,16 @@ void delete_all_queues(QUEUE * const queues, const unsigned short queues_count) 
     }
 }
 
-void join_all_threads(const pthread_t * const threads, const unsigned short thread_count) {
-    for ( int i = 0; i < thread_count; ++i ) {
-        pthread_join( threads[i], NULL );
+void join_all_threads(const threads_t * const all_threads) {
+    pthread_join( *(all_threads -> reciever_thread )     , NULL);
+    pthread_join( *(all_threads -> load_balancer_thread) , NULL);
+    pthread_join( *(all_threads -> sender_thread)        , NULL);
+    pthread_join( *(all_threads -> admin_thread)         , NULL);
+
+    for ( int i = 0; i < all_threads -> workers_count; ++i ) {
+        pthread_join( all_threads -> worker_threads[i], NULL );
     }
 }
-
-int close_program(QUEUE * const queues, const unsigned short queues_count, const int server_socket) {
-    delete_all_queues(queues, queues_count);
-    return close(server_socket);
-}
-
 
 #pragma endregion
 

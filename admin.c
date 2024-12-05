@@ -36,6 +36,8 @@ int main() {
     return 0;
 }
 
+#pragma region functions
+
 int connect_to_server() {
     int admin_socket;
     sockaddr_in_t server_address;
@@ -73,9 +75,7 @@ void communicate_with_server(const int server_socket) {
         
         print_directive(&directive);
         int sent = send(server_socket, (void *)&directive, sizeof(directive_t), 0);
-        printf("Sent %d bytes.\n", sent);
         sent = recv(server_socket, (void *)&result, sizeof(ssize_t), 0);
-        printf("Recieved %d bytes.\n", sent);
         print_result(result);
 
         if (should_end(&directive, result)) {
@@ -89,7 +89,6 @@ unsigned char should_end(const directive_t * const directive, const int result) 
 }   
 
 void print_result(const ssize_t result) {
-    printf("Raw result: %ld\n", result);
     switch (result){
         case DIRECTIVE_SUCCESS:
             printf("[SUCCESS] Directive success.\n");
@@ -178,3 +177,5 @@ void get_params(directive_t * const directive) {
     printf("Enter load increase: ");
     scanf("%lu", &(directive -> params.capacity) );
 }
+
+#pragma endregion

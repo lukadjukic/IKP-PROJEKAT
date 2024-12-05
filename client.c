@@ -45,9 +45,6 @@ int main() {
         if (send_request_recieve_id(&request, &server_address, sock)  < 0) {
             break;
         }
-    }
-
-    while ( counter--){
         recieve_response(&request, &server_address, sock);
         print_response(&request, out_file);
     }
@@ -58,6 +55,8 @@ int main() {
 
     return 0;
 }
+
+#pragma region functions
 
 int create_socket() {
     int client_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -139,3 +138,6 @@ void safe_fclose(FILE * file) {
         file = NULL;
     }
 }
+
+#pragma endregion
+

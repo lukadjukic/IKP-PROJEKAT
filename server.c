@@ -40,68 +40,92 @@ void * _admin(void * arg) {
     printf("[DEBUG] Admin thread finished.\n");
 }
 
-//  First queue  is input  (index 0)
-//  Second queue is output (index 1)
-//  The rest are workers   (indexes 2-)
-int create_all_threads(pthread_t * threads, unsigned short thread_count, arguments_t * arguments) {
-    if ( pthread_create(threads + 0, NULL, _reciever, (void*) (arguments + 0) ) ) {
-        perror("Creation of thread sender failed.\n");
+int create_all_threads(threads_t * const all_threads, const arguments_t * const arguments, const  arguments_t * const worker_arguments) {
+  
+    if ( pthread_create( all_threads -> reciever_thread, NULL, _reciever, (void*) (arguments + 0) ) ) {
+        perror("Creation of thread reciever failed.\n");
         return THREAD_CREATION_FAILURE;
     }
 
-    if ( pthread_create(threads + 1, NULL, _load_balancer, (void*) (arguments + 1) ) ) {
+    if ( pthread_create(all_threads -> load_balancer_thread, NULL, _load_balancer, (void*) (arguments + 1) ) ) {
         perror("Creation of thread load balancer failed.\n");
         return THREAD_CREATION_FAILURE;
     }
 
-    for ( int i = 2; i < thread_count - 1; ++i ) {
-        if ( pthread_create(threads + i, NULL, _worker, (void*) (arguments + 2) )) {
+    for ( int i = 0; i < all_threads -> workers_count; ++i ) {
+        if ( pthread_create(all_threads -> worker_threads + i, NULL, _worker, (void*) (worker_arguments + i) )) {
             perror("Creation of worker threads failed.\n");
             return THREAD_CREATION_FAILURE;
         }
-        sleep(1);
-        ( (arguments +2) -> num)++;
     }
 
-    if ( pthread_create(threads + thread_count - 1, NULL, _sender, (void*) (arguments + 3)) ) {
-        perror("Creation of thread reciever failed.\n");
+    if ( pthread_create(all_threads -> sender_thread, NULL, _sender, (void*) (arguments + 2)) ) {
+        perror("Creation of thread sender failed.\n");
         return THREAD_CREATION_FAILURE;
     }
+
+    if ( pthread_create(all_threads -> admin_thread, NULL, _admin, (void *) (arguments + 3)) ) {
+        perror("Creation of thread admin failed.\n");
+        return THREAD_CREATION_FAILURE;
+    }
+
     return 0;
+}
+
+void init_worker_args(arguments_t * const worker_arguments, queue_t * const input,  queue_t * const output, const size_t workers_count ) {
+    for (size_t i = 0; i < workers_count; ++i) {
+        worker_arguments[i].input        = input;
+        worker_arguments[i].output       = output;
+        worker_arguments[i].coordination = NULL; 
+        worker_arguments[i].num          = i;
+    }
+}
+
+//  First queue  is input  (index 0)
+//  Second queue is output (index 1)
+//  The rest are workers   (indexes 2-)
+void init_main_args(arguments_t * const main_arguments, queue_t * const queues, coordination_t * const coordinate, const int main_socket, const size_t worker_count) {
+    
+    arguments_t  reciever_args  = { NULL,          queues + 0,    main_socket,  coordinate };
+    arguments_t  balancer_args  = { queues + 0,    queues + 2,    0,            NULL       };
+    arguments_t  sender_args    = { queues + 1,    NULL,          main_socket,  NULL       };
+    arguments_t  admin_args     = { queues + 2,    NULL,          worker_count, coordinate };
+
+    memcpy(main_arguments + 0, &reciever_args,  sizeof(arguments_t));
+    memcpy(main_arguments + 1, &balancer_args,  sizeof(arguments_t));
+    memcpy(main_arguments + 2, &sender_args,    sizeof(arguments_t));
+    memcpy(main_arguments + 3, &admin_args,     sizeof(arguments_t));
+    
 }
 
 int main() {
-    int       sock;
-    QUEUE     queues[QUEUE_NUMBER];
-    pthread_t threads[THREAD_NUMBER];
-    pthread_t admin;
+    int             main_socket;
+    queue_t         queues[QUEUE_NUMBER];
+    coordination_t  coordinate;
+    pthread_t       reciever, load_balancer, sender, admin, workers[WORKER_NUMBER];
+    threads_t       all_threads = { &reciever, &load_balancer, &sender, &admin, workers, WORKER_NUMBER };
+    arguments_t     worker_arguments[WORKER_NUMBER];
+    arguments_t     main_arguments[4];
 
-    sock = init_socket(SOCK_DGRAM, 0, SERVER_PORT);
-    if ( sock < 0 ) {
-        return sock;
+    main_socket = init_socket(SOCK_DGRAM, 0, SERVER_PORT);
+    if ( main_socket < 0 ) {
+        return main_socket;
     }
 
+    init_coordination(&coordinate);
     init_queues(queues , QUEUE_NUMBER);
+    init_main_args(main_arguments, queues, &coordinate, main_socket, WORKER_NUMBER);
+    init_worker_args(worker_arguments, queues + 2, queues + 1, WORKER_NUMBER);
 
-    coordination_t coordinate;
-    pthread_mutex_init( &(coordinate.lock), NULL);
-    coordinate.state = COORD_START;
-    arguments_t admin_args      = { queues + 2,    NULL,          WORKER_NUMBER, &coordinate  };
+    if ( create_all_threads( &all_threads, main_arguments, worker_arguments) == THREAD_CREATION_FAILURE ) {
+        handle_halt(&coordinate);
+    }
 
-    arguments_t  reciever_args  = { NULL,          queues + 0,    sock, &coordinate };
-    arguments_t  balancer_args  = { queues + 0,    queues + 2,    0,    NULL        };
-    arguments_t  worker_args    = { queues + 2,    queues + 1,    0,    NULL        };
-    arguments_t  sender_args    = { queues + 1,    NULL,          sock, NULL        };
-    arguments_t  arguments[4]   = { reciever_args, balancer_args, worker_args, sender_args};
-
-    create_all_threads(threads, THREAD_NUMBER, arguments);
-
-    pthread_create(&admin, NULL, _admin, (void *) &admin_args);
-    pthread_join(admin, NULL);
-    pthread_mutex_destroy( &(coordinate.lock) );
-
-    join_all_threads(threads, THREAD_NUMBER);   
-    close_program(queues, QUEUE_NUMBER, sock);
+    join_all_threads(&all_threads);   
+    delete_coordination(&coordinate);
+    delete_all_queues(queues, QUEUE_NUMBER);
+    close(main_socket);
     return 0;
 }
 
+;
