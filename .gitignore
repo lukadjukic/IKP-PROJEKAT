@@ -4,4 +4,6 @@
 !*.h
 !*.txt
 !*.sh
+!*.png
+!Profiling_Pictures
 output.txt
