@@ -77,9 +77,12 @@ void deregister_producer(queue_t * const pqueue) {
 
 #pragma region enqueue
 
-static inline unsigned char is_queue_full(const queue_t * const pqueue) {
+static unsigned char is_queue_full(queue_t * const pqueue) {
     //  If capacity == 0 <==> queue capacity is limitless
-    return (pqueue -> capacity > 0) && (pqueue -> size >= pqueue -> capacity); 
+    pthread_mutex_lock(&(pqueue ->lock));
+    unsigned char result =  (pqueue -> capacity > 0) && (pqueue -> size >= pqueue -> capacity); 
+    pthread_mutex_unlock(&(pqueue ->lock));
+    return result;
 }
 
 static void enqueue_handle_pointers(queue_t * const pqueue, queue_item_t * const pitem) {
@@ -136,7 +139,7 @@ static inline unsigned char should_wait(const queue_t * const pqueue) {
 }
 
 static inline unsigned char is_end(const queue_t * const pqueue) {
-    return (pqueue -> first == NULL ) && (pqueue -> producer_count <= 0); 
+    return (pqueue -> first == NULL ) && (pqueue -> producer_count <= 0);
 }
 
 static unsigned char wait_for_producer(queue_t * const pqueue) {
@@ -146,7 +149,7 @@ static unsigned char wait_for_producer(queue_t * const pqueue) {
     }  
     // printf("Consumer awakened.\n");
     if ( is_end(pqueue) ) {
-        //printf("Consumer doesn't see any producers. Exiting...\n");
+        printf("Consumer doesn't see any producers. Exiting...\n");
         return 0;
     }
     return 1;
@@ -155,6 +158,7 @@ static unsigned char wait_for_producer(queue_t * const pqueue) {
 static queue_item_t * dequeue_item(queue_t * const pqueue) {
     pthread_mutex_lock( &(pqueue -> lock) );  
     if ( !wait_for_producer(pqueue) ) {
+        pthread_mutex_unlock( &(pqueue -> lock) );    
         return NULL;
     }
     queue_item_t * temp = pqueue -> first;
@@ -207,7 +211,9 @@ void resume_queue(queue_t * const pqueue) {
 }
 
 unsigned char is_queue_stopped(queue_t *const pqueue) {
+    pthread_mutex_lock(&(pqueue -> lock));
     unsigned char stopped =  pqueue -> flags & QUEUE_STOPPED; 
+    pthread_mutex_unlock(&(pqueue -> lock));        
     return stopped;
 }
 

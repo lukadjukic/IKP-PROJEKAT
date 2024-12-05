@@ -3,7 +3,7 @@
 #pragma region reciever_definitions
 
 static void                 recieve_requests(queue_t * const pqueue, coordination_t * const  coordination, const int server_socket);
-static inline unsigned char program_is_running(const coordination_t * const coordination);
+static inline unsigned char program_is_running( coordination_t * const coordination);
 static unsigned char        recieved_valid_request(request_t * const prequest, size_t * counter, const int server_socket);
 static inline unsigned char would_block(const ssize_t recieved_length);
 static int                  recieve_request(request_t * const buffer, sockaddr_in_t * const client_address, socklen_t * const address_length, const int server_socket );
@@ -86,8 +86,12 @@ static void recieve_requests(queue_t * const pqueue, coordination_t * const  coo
     }
 }
 
-static inline unsigned char program_is_running(const coordination_t * const coordination) {
-    return coordination -> state != COORD_HALT;
+static inline unsigned char program_is_running(coordination_t * const coordination) {
+    coordination_flags_t return_value;
+    pthread_mutex_lock(&(coordination ->lock));
+    return_value = coordination -> state;
+    pthread_mutex_unlock(&(coordination ->lock));
+    return return_value != COORD_HALT;
 } 
 
 static unsigned char recieved_valid_request(request_t * const prequest, size_t * counter, const int server_socket) {
@@ -254,7 +258,7 @@ static ssize_t recieve_and_validate_directive(directive_t * const buffer, const 
     recieved_data_length = recv(admin_socket, buffer, sizeof(directive_t), 0);
 
     if (recieved_data_length == 0) {
-        printf("[Admin] Disconnected.\n");
+        // printf("[Admin] Disconnected.\n");
     } else if (recieved_data_length < sizeof(directive_t)) {
         printf("[Admin] Recieved directive has invalid format. Size : %ld\n", recieved_data_length);
         send(admin_socket, &error, sizeof(ssize_t), 0);        
@@ -284,9 +288,9 @@ static ssize_t get_result(arguments_t * const arguments, const  directive_t * co
     result = handle_directive(arguments -> input, arguments -> num, arguments -> coordination, directive);
     
     if (result > 0) {
-        printf("[Admin] Directive handled successfully.\n");
+       printf("[Admin] Directive handled successfully.\n");
     } else  {
-        printf("[Admin] Directive handled unsuccessfully.\n");
+       printf("[Admin] Directive handled unsuccessfully.\n");
     }
     
     return result;
@@ -465,8 +469,10 @@ int find_first_free_worker(queue_t * worker_queues, const size_t workers_count) 
     queue_flags_t flags;
 
     for ( i = 0;  i < workers_count; ++i) {
+        pthread_mutex_lock(&(worker_queues[i].lock));
         capacity = worker_queues[i].capacity;
         size     = worker_queues[i].size;
+        pthread_mutex_unlock(&(worker_queues[i].lock));
         if ( (!capacity || size < capacity) && !is_queue_stopped(worker_queues + i) ) {
             return i;
         }
