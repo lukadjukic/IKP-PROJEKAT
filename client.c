@@ -40,8 +40,9 @@ int main() {
         return -1;
     }
 
+    set_server_address(&server_address);
+    
     while (fill_request(&request, in_file)){
-        set_server_address(&server_address);
         if (send_request_recieve_id(&request, &server_address, sock)  < 0) {
             break;
         }
