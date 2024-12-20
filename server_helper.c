@@ -362,10 +362,10 @@ void delete_coordination(coordination_t * const coordination) {
     pthread_mutex_destroy( &(coordination -> lock) );
 }
 
-void safe_dealocalte(void * ptr) {
-    if (ptr)
-        free(ptr);
-    ptr = NULL;
+void safe_dealocalte(void ** ptr) {
+    if ( *ptr )
+        free( *ptr );
+    * ptr = NULL;
 }
 
 void init_queues(QUEUE * const queues, const unsigned short queues_count) {
@@ -409,7 +409,7 @@ void sender(queue_t * const pqueue, const int server_socket) {
         }
     
         send_processed_request(request, server_socket);
-        safe_dealocalte((void *)request);
+        safe_dealocalte((void **) &request);
     }
 }
 
@@ -446,7 +446,7 @@ static void balance(queue_t * const input, queue_t * const worker_queues, const 
         
         printf("[Load Balancer] Request id: %lu assigned to thread %d.\n",request -> id , selected_worker);    
         enqueue(worker_queues + selected_worker, request);
-        safe_dealocalte(request);
+        safe_dealocalte((void **) &request);
     }
 } 
 
@@ -511,7 +511,7 @@ void worker(queue_t * const input, queue_t * const output, const int id) {
         }
         printf("[Worker %d] Worker handled request id: %lu.\n", id, request -> id);
         enqueue(output, request);
-        safe_dealocalte((void *)request);
+        safe_dealocalte((void **) &request);
     }
     deregister_producer(output);
 }
