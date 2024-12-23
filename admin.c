@@ -74,8 +74,8 @@ void communicate_with_server(const int server_socket) {
             break;
         
         print_directive(&directive);
-        int sent = send(server_socket, (void *)&directive, sizeof(directive_t), 0);
-        sent = recv(server_socket, (void *)&result, sizeof(ssize_t), 0);
+        send(server_socket, (void *)&directive, sizeof(directive_t), 0);
+        recv(server_socket, (void *)&result, sizeof(ssize_t), 0);
         print_result(result);
 
         if (should_end(&directive, result)) {

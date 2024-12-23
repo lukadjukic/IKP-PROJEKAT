@@ -363,7 +363,7 @@ void delete_coordination(coordination_t * const coordination) {
 }
 
 void safe_dealocalte(void ** ptr) {
-    if ( *ptr )
+    if ( ptr && *ptr )
         free( *ptr );
     * ptr = NULL;
 }

@@ -42,11 +42,12 @@ void init_queue(queue_t * const pqueue, const size_t _capacity) {
 static void delete_all_requests(queue_t * const pqueue) {
     request_t * prequest = NULL;
     while ( pqueue -> first ){
-        if ( prequest ) {
-            prequest = dequeue(pqueue);
-            free(prequest);
-            prequest = NULL;
-        }
+        prequest = dequeue(pqueue);
+        if ( !prequest )
+            return;
+
+        free(prequest);
+        prequest = NULL;
     }
 }
 
