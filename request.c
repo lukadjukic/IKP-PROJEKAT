@@ -79,7 +79,7 @@ void deregister_producer(queue_t * const pqueue) {
 static unsigned char is_queue_full(queue_t * const pqueue) {
     //  If capacity == 0 <==> queue capacity is limitless
     pthread_mutex_lock(&(pqueue ->lock));
-    unsigned char result =  (pqueue -> capacity > 0) && (pqueue -> size >= pqueue -> capacity); 
+    unsigned char result =  (pqueue -> capacity > QUEUE_CAPACITY_UNLIMITED) && (pqueue -> size >= pqueue -> capacity); 
     pthread_mutex_unlock(&(pqueue ->lock));
     return result;
 }

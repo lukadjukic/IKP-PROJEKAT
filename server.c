@@ -1,5 +1,4 @@
 #include "server_helper.h"
-
 //  Wrapper functions
 void * _reciever(void * arg) {
     printf("[DEBUG] Reciever thread started.\n");
@@ -114,6 +113,7 @@ int main() {
 
     init_coordination(&coordinate);
     init_queues(queues , QUEUE_NUMBER);
+    pthread_mutex_init(&mut, NULL);
     init_main_args(main_arguments, queues, &coordinate, main_socket, WORKER_NUMBER);
     init_worker_args(worker_arguments, queues + 2, queues + 1, WORKER_NUMBER);
 
@@ -121,9 +121,10 @@ int main() {
         handle_halt(&coordinate);
     }
 
-    join_all_threads(&all_threads);   
+    join_all_threads(&all_threads); 
     delete_coordination(&coordinate);
     delete_all_queues(queues, QUEUE_NUMBER);
+    pthread_mutex_destroy(&mut); 
     close(main_socket);
     return 0;
 }

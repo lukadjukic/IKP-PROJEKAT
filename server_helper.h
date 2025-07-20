@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <errno.h>
+#include <math.h>
 #include "queue.h"
 #include "direcive.h"
 
@@ -25,6 +26,7 @@
 #define QUEUE_NUMBER            (WORKER_NUMBER + 2)
 #define THREAD_NUMBER           (WORKER_NUMBER + 3)
 
+extern mutex_t mut;
 
 typedef struct threads_t {
     pthread_t * reciever_thread;

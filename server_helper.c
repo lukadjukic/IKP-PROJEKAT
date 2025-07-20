@@ -1,5 +1,10 @@
 #include "server_helper.h"
 
+#define N 1000000
+mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+unsigned char primes[N];
+size_t max_prime = 0;
+
 #pragma region reciever_definitions
 
 static void                 recieve_requests(queue_t * const pqueue, coordination_t * const  coordination, const int server_socket);
@@ -54,6 +59,7 @@ static ssize_t       operation_0(const ssize_t * const arguments);
 static ssize_t       operation_1(const ssize_t * const arguments);
 static ssize_t       operation_2(const ssize_t * const arguments);
 static ssize_t       operation_3(const ssize_t * const arguments);
+static ssize_t       find_largest_prime(const ssize_t * const arguments);
 
 #pragma endregion
 
@@ -65,7 +71,7 @@ static int  bind_server_socket(const sockaddr_in_t * const server_address, const
 
 #pragma endregion
 
-#pragma region reciever 
+#pragma region reciever
 
 void reciever(queue_t * const pqueue,  coordination_t * const coordination, const int server_socket) {
     printf("[DEBUG] Server listening on port: %u ...\n", SERVER_PORT);    
@@ -445,7 +451,7 @@ static void balance(queue_t * const input, queue_t * const worker_queues, const 
         int selected_worker = select_worker(worker_queues, workers_count);
         
         printf("[Load Balancer] Request id: %lu assigned to thread %d.\n",request -> id , selected_worker);    
-        enqueue(worker_queues + selected_worker, request);
+        enqueue(worker_queues + selected_worker, request);        
         safe_dealocalte((void **) &request);
     }
 } 
@@ -505,7 +511,7 @@ static void deregister_to_worker_queues(queue_t * const queues, const size_t wor
 void worker(queue_t * const input, queue_t * const output, const int id) {
     register_producer(output);
     while (1) {
-        REQUEST* request = dequeue(input);
+        REQUEST* request = dequeue(input);        
         if( !process_single_request(input, request) ){
             break;
         }
@@ -520,7 +526,7 @@ unsigned char process_single_request(queue_t * queue, request_t * request) {
     if (!request) {
         return 0;
     }
-
+    
     if (is_queue_stopped(queue)) {
         request -> flags.stopped = 1; 
         return 1;   
@@ -534,7 +540,7 @@ void proccess(request_t * request){
     if ( !validate_request(request) ) {
         return;
     }
-
+    
     switch (request -> operation) {
         case 0:
             request -> result = operation_0(request -> arguments);
@@ -546,7 +552,8 @@ void proccess(request_t * request){
             request -> result = operation_2(request -> arguments);
             break;
         case 3:
-            request -> result = operation_3(request -> arguments);
+            request -> result = find_largest_prime(request -> arguments);
+            request -> flags.invalid = request ->result == -2;
             break;
         default:
             break;
@@ -589,5 +596,90 @@ ssize_t operation_3(const ssize_t * const arguments) {
     ssize_t result = arguments[0];
     return ~result + 1;
 }
+
+ssize_t find_largest_prime_index(const ssize_t * const arguments, const unsigned char * const is_eliminated, size_t argument_count)
+{
+    ssize_t largest_prime_index = -1;
+    for (size_t i = 0; i < argument_count; ++i)
+        if (!is_eliminated[i] &&  (largest_prime_index == -1 || arguments[i] > arguments[largest_prime_index]))
+            largest_prime_index = i;
+    
+    return largest_prime_index;
+}
+
+void eliminate_negatives(const ssize_t * const arguments, unsigned char * is_eliminated, size_t argument_count)
+{
+    for (int i = 0; i < argument_count; ++i)
+        is_eliminated[i] = arguments[i] <= 0;        
+}
+
+void eliminate_already_calculated(const ssize_t * const arguments, unsigned char * is_eliminated, size_t argument_count)
+{
+    pthread_mutex_lock(&mut);
+    for (size_t i = 0; i < argument_count; ++i)
+        if (arguments[i] > 0)
+            is_eliminated[i] = !primes[arguments[i]];
+
+    pthread_mutex_unlock(&mut);
+}
+
+void sieve_of_erathostenes(ssize_t to, unsigned char *primes) {
+    if (to > N || to < 0)
+        return;
+
+    for (size_t i = 2; i <= to; ++i)
+        primes[i] = 1;
+    
+    primes[0] = primes[1] = 0;
+    
+    for (size_t prime = 2; prime <= to; ++prime) {
+        if (!primes[prime])
+            continue;         
+        for (size_t num = prime * prime; num <= to; num += prime)
+            primes[num] = 0;        
+    }        
+}
+
+ssize_t get_max(const ssize_t * const arguments, size_t argument_count)
+{
+    ssize_t max = arguments[0];
+    for (size_t i = 1; i < argument_count; ++i)
+        if (max < arguments[i])
+            max = arguments[i];
+    return max;
+}
+
+int eliminate_positive_not_primes(const ssize_t * const arguments, unsigned char * is_eliminated, size_t argument_count)
+{
+    ssize_t max  = get_max(arguments, argument_count);
+    if ( max > N)
+        return -1;
+    if (max < 0)
+        return 0;
+    
+    pthread_mutex_lock(&mut);
+    if ( max > max_prime){
+        sieve_of_erathostenes(N, primes);
+        max_prime = N;
+    }
+    pthread_mutex_unlock(&mut);
+
+    eliminate_already_calculated(arguments, is_eliminated, argument_count);
+    return 0;
+}
+
+//  Returns the index of the largest prime or -1 if there are none or -2 if the largest prime is larger than the upper sealing N
+
+ssize_t find_largest_prime(const ssize_t * const arguments)
+{
+    size_t argument_count = MAX_ARGUMENTS;
+    unsigned char is_eliminated[MAX_ARGUMENTS] = {0};
+
+    eliminate_negatives(arguments, is_eliminated, argument_count);
+    if (eliminate_positive_not_primes(arguments, is_eliminated, argument_count) == -1)
+        return -2;
+    return find_largest_prime_index(arguments, is_eliminated, argument_count);
+}
+
 
 #pragma endregion
