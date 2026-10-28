@@ -302,7 +302,7 @@ void test_primes(){
     test_t        test;
     FILE *        in_file; 
     
-    const char * const in_filename = "tests.txt";
+    const char * const in_filename = "../tests/tests.txt";
     
     in_file  = safe_fopen(in_filename, "r+");
     
