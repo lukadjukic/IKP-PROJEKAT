@@ -10,8 +10,8 @@
 
 typedef struct queue_item_t {
     request_t            request;
-    struct queue_item_t* next;
-    struct queue_item_t* prev;    
+    struct queue_item_t * next;
+    struct queue_item_t * prev;    
 } queue_item_t;
 
 typedef enum queue_flags_t {

@@ -1,16 +1,10 @@
 #ifndef SERVER_HELPER_HEADER
 #define SERVER_HELPER_HEADER
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <pthread.h>
 #include <errno.h>
-#include <math.h>
-#include "queue.h"
-#include "direcive.h"
+#include <unistd.h>
+#include "./common/queue.h"
+#include "./common/direcive.h"
 
 #define RECIEVE_SUCCESS 1
 #define RECIEVE_FAILURE 0

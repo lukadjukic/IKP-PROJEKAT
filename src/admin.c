@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include "direcive.h"
-#include "request.h"
+#include "./common/direcive.h"
+#include "./common/request.h"
 
 #define SERVER_PORT 11001
 #define TEST_PORT   11000
