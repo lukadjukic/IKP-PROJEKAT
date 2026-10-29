@@ -160,7 +160,7 @@ int fill_directive(directive_t * const directive, int * const error) {
         return 4;
     }
         
-    directive -> dir = (directive_code_t)(0x01 << result);
+    directive -> dir = (dcode_t)(0x01 << result);
     *error = 0;
 
     if (directive -> dir == DIR_HALT) {

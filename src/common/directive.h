@@ -9,17 +9,17 @@
 #define MAX_INCREMENT      100
 
 
-typedef enum directive_code_t {
+typedef enum dcode_t {
     DIR_HALT                     = 0x01,
     DIR_THEAD_STOP               = 0x02,
     DIR_THREAD_CONTINUE          = 0x04,
     DIR_THREAD_INCREASE_CAPACITY = 0x08
-} directive_code_t;
+} dcode_t;
 
 typedef struct directive_t {
-    size_t              id;
-    size_t              capacity;
-    directive_code_t    dir;
+    size_t  id;
+    size_t  capacity;
+    dcode_t dir;
 } directive_t;
 
 void print_directive(const directive_t * const directive);

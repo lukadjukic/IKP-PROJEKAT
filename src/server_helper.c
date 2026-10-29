@@ -44,7 +44,7 @@ static connection_status_t   communicate_with_admin(arguments_t * const argument
 static inline unsigned char  should_end_program(const connection_status_t connection_status);
 static connection_status_t   handle_single_directive(arguments_t * const arguments, const int admin_socket);
 static ssize_t               recieve_and_validate_directive(directive_t * const buffer, const int admin_socket);
-static connection_status_t   should_halt(ssize_t result, directive_code_t directive_code);
+static connection_status_t   should_halt(ssize_t result, dcode_t directive_code);
 static ssize_t               respond_to_admin(arguments_t * const arguments, const directive_t * const directive, const int admin_socket);
 static ssize_t               get_result(arguments_t * const arguments, const  directive_t * const directive);
 
@@ -272,7 +272,7 @@ static ssize_t recieve_and_validate_directive(directive_t * const buffer, const 
     return recieved_data_length;
 }
 
-static connection_status_t should_halt(ssize_t result, directive_code_t directive_code) {
+static connection_status_t should_halt(ssize_t result, dcode_t directive_code) {
     unsigned char halt = (result > 0) && (directive_code == DIR_HALT);
     return halt ? CONNECTION_END_HALT : CONNECTION_PERSIST;
 } 
