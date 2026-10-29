@@ -23,7 +23,7 @@ void          set_server_address(sockaddr_in_t * address, const unsigned short s
 int           ask_user_for_directive(directive_t * const directive, unsigned char * const exit);
 void          print_result(const ssize_t result);
 void          print_menu();
-unsigned char should_end(const directive_t * const directive, const int result);
+unsigned char should_end(const directive_t * const directive, const ssize_t result);
 int           fill_directive(directive_t * const directive, int * const error);
 void          get_params(directive_t * const directive);
 void          get_directive_code(int * result);
@@ -50,7 +50,9 @@ int connect_to_server() {
     int           admin_socket;
     sockaddr_in_t server_address;
 
-    if ((admin_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    admin_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (admin_socket < 0) {
         perror("Socket creation failed.\n");
         return admin_socket;
     }
@@ -93,7 +95,7 @@ void communicate_with_server(const int server_socket) {
     }
 }
 
-unsigned char should_end(const directive_t * const directive, const int result) {
+unsigned char should_end(const directive_t * const directive, const ssize_t result) {
     return (directive->dir == DIR_HALT) && (result == DIRECTIVE_SUCCESS);
 }
 
@@ -267,7 +269,7 @@ void print_test(const test_t * const test) {
 }
 
 unsigned char fill_test(test_t * const test, FILE * file) {
-    memset((void *)test, 0, sizeof(test));
+    memset((void *)test, 0, sizeof(test_t));
 
     if (fscanf(file, "%hhu ", &(test->request.operation)) != 1) {
         return 0;

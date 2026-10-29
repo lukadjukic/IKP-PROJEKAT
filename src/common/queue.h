@@ -2,11 +2,11 @@
 #define QUEUE_HEADER
 #include "request.h"
 
-#define QUEUE_CAPACITY_UNLIMITED 0
-#define QUEUE_CAPACITY_DEFAULT   10
-#define QUEUE_FULL               -1
-#define OUT_OF_MEMORY            -2
-#define SUCCESS                  0
+#define QUEUE_CAPACITY_UNLIMITED (0)
+#define QUEUE_CAPACITY_DEFAULT   (10)
+#define QUEUE_FULL               (-1)
+#define OUT_OF_MEMORY            (-2)
+#define SUCCESS                  (0)
 
 typedef struct queue_item_t {
     struct queue_item_t * next;

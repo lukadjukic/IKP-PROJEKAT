@@ -1,12 +1,13 @@
 #ifndef DIRECTIVE_HEADER
 #define DIRECTIVE_HEADER
+#include <stdlib.h>
 
-#define DIRECTIVE_SUCCESS  1
-#define INDEX_OUT_OF_RANGE -1
-#define INCREMENT_TOO_BIG  -2
-#define CAPACITY_TOO_BIG   -3
-#define INVALID_DIRECTIVE  -4
-#define MAX_INCREMENT      100
+#define DIRECTIVE_SUCCESS  (1)
+#define INDEX_OUT_OF_RANGE (-1)
+#define INCREMENT_TOO_BIG  (-2)
+#define CAPACITY_TOO_BIG   (-3)
+#define INVALID_DIRECTIVE  (-4)
+#define MAX_INCREMENT      (100)
 
 typedef enum dcode_t {
     DIR_HALT                     = 0x01,

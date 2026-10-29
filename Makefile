@@ -1,6 +1,6 @@
 # Compiler, compiler and loader flags
 CC := gcc
-CFLAGS := -c -Wall -Wextra
+CFLAGS := -c -Wall -Wextra -std=c11
 LFLAGS :=
 #	Executables
 EXE :=	server client admin
@@ -10,7 +10,7 @@ CMN_DIR := $(SRC_DIR)/common
 BLD_DIR := ./build
 OBJ_DIR := $(BLD_DIR)/artefacts
 
-.PHONY: all clean server admin client format
+.PHONY: all clean server admin client format format-check tidy
 
 all: server admin client
 server:	build/server
@@ -21,6 +21,15 @@ format:
 	@echo "[CF]      Clang formatting: directory src/"
 	@find src -type f \( -name '*.c' -o -name '*.h' \) \
 	    -exec clang-format -i {} +
+
+format-check:
+	@echo "[CF]      Clang format check:"
+	@find src -type f \( -name '*.c' -o -name '*.h' \) \
+ 	    -exec clang-format --dry-run --Werror {} +
+
+tidy:
+	@echo "[CT]      Clang tidy:"
+	@clang-tidy $$(find src -type f -name '*.c') -- -std=c11 
 
 # Building starts from here:
 

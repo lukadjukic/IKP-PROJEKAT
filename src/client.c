@@ -112,9 +112,11 @@ unsigned char fill_request(request_t * const request, FILE * file) {
     }
 
     for (int i = 0; i < MAX_ARGUMENTS; ++i) {
+        if (feof(file))
+            return 0;
         if (fscanf(file, "%ld ", &(request->arguments[i])) != 1)
             return 0;
-        fscanf(file, "\n");
+        // fscanf(file, "\n");
     }
 
     return 1;
