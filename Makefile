@@ -10,13 +10,19 @@ CMN_DIR := $(SRC_DIR)/common
 BLD_DIR := ./build
 OBJ_DIR := $(BLD_DIR)/artefacts
 
-.PHONY: all clean server admin client
+.PHONY: all clean server admin client format
 
 all: server admin client
 server:	build/server
 admin:	build/admin
 client:	build/client
 
+format:
+	@echo "[CF]      Clang formatting: directory src/"
+	@find src -type f \( -name '*.c' -o -name '*.h' \) \
+	    -exec clang-format -i {} +
+
+# Building starts from here:
 
 build/artefacts/request.o:	$(CMN_DIR)/request.c $(CMN_DIR)/request.h 
 	@echo "[CC]      $@"

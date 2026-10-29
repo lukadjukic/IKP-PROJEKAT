@@ -20,7 +20,7 @@
 #define BUFFER_SIZE             1024
 #define SERVER_PORT             11000
 #define LISTENER_PORT           11001
-#define WORKER_NUMBER           (5) 
+#define WORKER_NUMBER           (5)
 #define QUEUE_NUMBER            (WORKER_NUMBER + 2)
 #define THREAD_NUMBER           (WORKER_NUMBER + 3)
 
@@ -32,8 +32,8 @@ typedef enum coordination_flags_t {
 } coordination_flags_t;
 
 typedef struct coordination_t {
-    coordination_flags_t  state;
-    mutex_t               lock; 
+    coordination_flags_t state;
+    mutex_t              lock;
 } coordination_t;
 
 typedef struct threads_t {
@@ -46,16 +46,16 @@ typedef struct threads_t {
 } threads_t;
 
 typedef enum {
-    CONNECTION_PERSIST      = 0,
-    CONNECTION_END_NO_HALT  = 1,
-    CONNECTION_END_HALT     = 2,
+    CONNECTION_PERSIST     = 0,
+    CONNECTION_END_NO_HALT = 1,
+    CONNECTION_END_HALT    = 2,
 } connection_status_t;
 
 typedef struct arguments_t {
     queue_t *        input;
     queue_t *        output;
-    ssize_t          num;   
-    coordination_t * coordination;      
+    ssize_t          num;
+    coordination_t * coordination;
 } arguments_t;
 
 int  init_socket(const int type, const int protocol, const unsigned short port);
@@ -65,17 +65,17 @@ void delete_coordination(coordination_t * const coordination);
 void delete_all_queues(queue_t * const queues, const unsigned short queues_count);
 void join_all_threads(const threads_t * const all_threads);
 void safe_dealocalte(void ** ptr);
-void reciever(queue_t * const pqueue,  coordination_t * const coordination, const int server_socket);
+void reciever(queue_t * const pqueue, coordination_t * const coordination, const int server_socket);
 void sender(queue_t * const pqueue, const int server_socket);
-void load_balancer(queue_t * const input,queue_t * const worker_queues);
+void load_balancer(queue_t * const input, queue_t * const worker_queues);
 void admin(arguments_t * const arguments);
 void worker(queue_t * const input, queue_t * const output, const int id);
 
-void      coordinate(coordination_t * const coordination, const coordination_flags_t new_state);
-ssize_t   handle_directive(queue_t * const queues, const size_t workers_count, coordination_t * const coordinate, const directive_t * const directive);
-ssize_t   handle_halt(coordination_t * const coordination);
-ssize_t   handle_thread_stop(queue_t * const queues, const size_t workers_count, const size_t id);
-ssize_t   handle_thread_continue(queue_t * const queues, const size_t workers_count, const size_t id);
-ssize_t   handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const size_t id, const size_t increment);
+void    coordinate(coordination_t * const coordination, const coordination_flags_t new_state);
+ssize_t handle_directive(queue_t * const queues, const size_t workers_count, coordination_t * const coordinate, const directive_t * const directive);
+ssize_t handle_halt(coordination_t * const coordination);
+ssize_t handle_thread_stop(queue_t * const queues, const size_t workers_count, const size_t id);
+ssize_t handle_thread_continue(queue_t * const queues, const size_t workers_count, const size_t id);
+ssize_t handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const size_t id, const size_t increment);
 
 #endif

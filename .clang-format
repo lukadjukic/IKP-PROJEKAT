@@ -1,0 +1,30 @@
+BasedOnStyle: LLVM
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Long, horizontal lines
+ColumnLimit: 0
+
+# Braces
+BreakBeforeBraces: Attach
+
+# Pointer alignment
+PointerAlignment: Middle
+DerivePointerAlignment: false
+
+# Align related declarations and values
+AlignConsecutiveMacros: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+
+# Align wrapped function arguments
+AlignAfterOpenBracket: Align
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+
+# Include ordering
+SortIncludes: false
