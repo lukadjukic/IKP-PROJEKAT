@@ -164,8 +164,8 @@ int fill_directive(directive_t * const directive, int * const error) {
     *error = 0;
 
     if (directive -> dir == DIR_HALT) {
-        directive -> params.capacity = 0;
-        directive -> params.id = 0;
+        directive -> capacity = 0;
+        directive -> id = 0;
         return directive -> dir;
     }
     get_params(directive);
@@ -185,15 +185,15 @@ void get_directive_code(int * result) {
 
 void get_params(directive_t * const directive) {
     printf("Enter worker Id: ");
-    scanf("%lu", &(directive ->params.id) );
+    scanf("%lu", &(directive -> id) );
 
     if (directive -> dir != DIR_THREAD_INCREASE_CAPACITY) {
-        directive -> params.capacity = 0;
+        directive -> capacity = 0;
         return;
     }
 
     printf("Enter load increase: ");
-    scanf("%lu", &(directive -> params.capacity) );
+    scanf("%lu", &(directive -> capacity) );
 }
 
 FILE* safe_fopen(const char * const filename, const char * const modes) {

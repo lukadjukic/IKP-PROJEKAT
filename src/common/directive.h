@@ -16,13 +16,9 @@ typedef enum directive_code_t {
     DIR_THREAD_INCREASE_CAPACITY = 0x08
 } directive_code_t;
 
-typedef struct {
-    size_t id;
-    size_t capacity; 
-} parameters_t;
-
 typedef struct directive_t {
-    parameters_t        params;
+    size_t              id;
+    size_t              capacity;
     directive_code_t    dir;
 } directive_t;
 

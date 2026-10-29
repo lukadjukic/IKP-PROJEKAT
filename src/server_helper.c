@@ -704,13 +704,13 @@ ssize_t handle_directive(queue_t * const queues, const size_t workers_count, coo
             result = handle_halt(coordinate);    
             break;
         case DIR_THEAD_STOP:
-            result = handle_thread_stop(queues, workers_count, directive -> params.id);
+            result = handle_thread_stop(queues, workers_count, directive -> id);
             break;
         case DIR_THREAD_CONTINUE:
-            result = handle_thread_continue(queues, workers_count, directive -> params.id);
+            result = handle_thread_continue(queues, workers_count, directive -> id);
             break;
         case DIR_THREAD_INCREASE_CAPACITY:
-            result = handle_thread_increase_capacity(queues, workers_count, &(directive -> params) );
+            result = handle_thread_increase_capacity(queues, workers_count, directive -> id, directive -> capacity );
             break;    
         default:
             result = INVALID_DIRECTIVE;
@@ -743,18 +743,17 @@ ssize_t handle_thread_continue(queue_t * const queues, const size_t workers_coun
     return DIRECTIVE_SUCCESS;
 }
 
-ssize_t handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const parameters_t * const parameters) {
-    const size_t    increment = parameters -> capacity;
-    const size_t    index     = parameters -> id;
-    queue_t * const queue     = queues + index;
+ssize_t handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const size_t id, const size_t increment)
+{
+    queue_t * const queue = queues + id; // id == index
     
-    if ( index_out_of_range(index, workers_count) ) {
+    if (index_out_of_range(id, workers_count)) {
         return INDEX_OUT_OF_RANGE;
     }
-    if ( increment_too_big(increment, MAX_INCREMENT) ) {
+    if (increment_too_big(increment, MAX_INCREMENT)) {
         return INCREMENT_TOO_BIG;
     }
-    if ( capacity_too_big(queue -> capacity, increment) ) {
+    if (capacity_too_big(queue -> capacity, increment)) {
         return CAPACITY_TOO_BIG;
     }
 

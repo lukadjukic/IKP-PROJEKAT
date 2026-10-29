@@ -76,6 +76,6 @@ ssize_t   handle_directive(queue_t * const queues, const size_t workers_count, c
 ssize_t   handle_halt(coordination_t * const coordination);
 ssize_t   handle_thread_stop(queue_t * const queues, const size_t workers_count, const size_t id);
 ssize_t   handle_thread_continue(queue_t * const queues, const size_t workers_count, const size_t id);
-ssize_t   handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const parameters_t * const parameters);
+ssize_t   handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const size_t id, const size_t increment);
 
 #endif
