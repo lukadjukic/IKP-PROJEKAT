@@ -3,7 +3,7 @@
 
 #pragma region requests
 
-static void print_array(const ssize_t const * array, const size_t array_length) {
+static void print_array(const ssize_t * array, const size_t array_length) {
     printf("\tArguments:\t[");
     for(size_t i = 0; i < array_length; ++i) {
         printf("%ld", array[i]);

@@ -58,7 +58,6 @@ static unsigned char validate_request(request_t * request);
 static ssize_t       operation_0(const ssize_t * const arguments);
 static ssize_t       operation_1(const ssize_t * const arguments);
 static ssize_t       operation_2(const ssize_t * const arguments);
-static ssize_t       operation_3(const ssize_t * const arguments);
 static ssize_t       find_largest_prime(const ssize_t * const arguments);
 
 #pragma endregion
@@ -138,7 +137,7 @@ static int recieve_request(request_t * const buffer, sockaddr_in_t * const clien
     } else if (recieved_length < 0){
         perror("Recieve failed.\n");
         return RECIEVE_FAILURE;
-    } else if(recieved_length < sizeof(REQUEST)){
+    } else if((size_t)recieved_length < sizeof(REQUEST)){
         perror("Recieved request invalid format.\n");
         return RECIEVE_FAILURE;
     }
@@ -250,7 +249,7 @@ static connection_status_t handle_single_directive(arguments_t * const arguments
     recieved_length  = recieve_and_validate_directive(&buffer, admin_socket);
     if (recieved_length == 0)
         return CONNECTION_END_NO_HALT;
-    else if (recieved_length < sizeof(directive_t))
+    else if ((size_t)recieved_length < sizeof(directive_t))
         return CONNECTION_PERSIST;
 
     result = respond_to_admin(arguments, &buffer, admin_socket);
@@ -265,7 +264,7 @@ static ssize_t recieve_and_validate_directive(directive_t * const buffer, const 
 
     if (recieved_data_length == 0) {
         // printf("[Admin] Disconnected.\n");
-    } else if (recieved_data_length < sizeof(directive_t)) {
+    } else if ((size_t)recieved_data_length < sizeof(directive_t)) {
         printf("[Admin] Recieved directive has invalid format. Size : %ld\n", recieved_data_length);
         send(admin_socket, &error, sizeof(ssize_t), 0);        
     }
@@ -396,7 +395,7 @@ void join_all_threads(const threads_t * const all_threads) {
     pthread_join( *(all_threads -> sender_thread)        , NULL);
     pthread_join( *(all_threads -> admin_thread)         , NULL);
 
-    for ( int i = 0; i < all_threads -> workers_count; ++i ) {
+    for (size_t i = 0; i < all_threads -> workers_count; ++i ) {
         pthread_join( all_threads -> worker_threads[i], NULL );
     }
 }
@@ -472,7 +471,6 @@ int select_worker(queue_t * worker_queues, const size_t workers_count) {
 
 int find_first_free_worker(queue_t * worker_queues, const size_t workers_count) {
     size_t capacity, size, i;
-    queue_flags_t flags;
 
     for ( i = 0;  i < workers_count; ++i) {
         pthread_mutex_lock(&(worker_queues[i].lock));
@@ -491,18 +489,17 @@ static inline unsigned char is_valid_id(const int id, const ssize_t workers_coun
 }
 
 static void register_to_worker_queues(queue_t * const queues, const size_t workers_count) {
-    for (int i = 0; i < workers_count; ++i) {
+    for (size_t i = 0; i < workers_count; ++i) {
         register_producer(queues + i);
     }
 }
 
 static void deregister_to_worker_queues(queue_t * const queues, const size_t workers_count) {
-    for (int i = 0; i < workers_count; ++i) {
+    for (size_t i = 0; i < workers_count; ++i) {
         deregister_producer(queues + i);
     }
 
 }
-
 
 #pragma endregion
 
@@ -575,7 +572,7 @@ unsigned char validate_request(request_t * request) {
 
 ssize_t operation_0(const ssize_t * const arguments) {
     size_t argument = (size_t) arguments[0];
-    return (argument * argument++) >> 1;
+    return (argument * (argument + 1)) >> 1;
 }
 
 ssize_t operation_1(const ssize_t * const arguments) {
@@ -592,11 +589,6 @@ ssize_t operation_2(const ssize_t * const arguments) {
     return result;
 }
 
-ssize_t operation_3(const ssize_t * const arguments) {
-    ssize_t result = arguments[0];
-    return ~result + 1;
-}
-
 ssize_t find_largest_prime_index(const ssize_t * const arguments, const unsigned char * const is_eliminated, size_t argument_count)
 {
     ssize_t largest_prime_index = -1;
@@ -609,7 +601,7 @@ ssize_t find_largest_prime_index(const ssize_t * const arguments, const unsigned
 
 void eliminate_negatives(const ssize_t * const arguments, unsigned char * is_eliminated, size_t argument_count)
 {
-    for (int i = 0; i < argument_count; ++i)
+    for (size_t i = 0; i < argument_count; ++i)
         is_eliminated[i] = arguments[i] <= 0;        
 }
 
@@ -627,15 +619,15 @@ void sieve_of_erathostenes(ssize_t to, unsigned char *primes) {
     if (to > N || to < 0)
         return;
 
-    for (size_t i = 2; i <= to; ++i)
+    for (ssize_t i = 2; i <= to; ++i)
         primes[i] = 1;
     
     primes[0] = primes[1] = 0;
     
-    for (size_t prime = 2; prime <= to; ++prime) {
+    for (ssize_t prime = 2; prime <= to; ++prime) {
         if (!primes[prime])
             continue;         
-        for (size_t num = prime * prime; num <= to; num += prime)
+        for (ssize_t num = prime * prime; num <= to; num += prime)
             primes[num] = 0;        
     }        
 }
@@ -658,7 +650,7 @@ int eliminate_positive_not_primes(const ssize_t * const arguments, unsigned char
         return 0;
     
     pthread_mutex_lock(&mut);
-    if ( max > max_prime){
+    if ((size_t)max > max_prime){
         sieve_of_erathostenes(N, primes);
         max_prime = N;
     }

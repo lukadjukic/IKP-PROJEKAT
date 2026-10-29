@@ -4,7 +4,7 @@
 #include "direcive.h"
 
 static inline unsigned char index_out_of_range(const size_t index, const size_t workers_count) {
-    return ( (index < 0) || (index > workers_count -1) );
+    return (index > workers_count -1);
 }
 
 static inline unsigned char increment_too_big(const size_t increment, const size_t max_increment) {

@@ -1,6 +1,6 @@
 # Compiler, compiler and loader flags
 CC := gcc
-CFLAGS := -c
+CFLAGS := -c -Wall -Wextra
 LFLAGS :=
 #	Executables
 EXE :=	server client admin
@@ -10,7 +10,13 @@ CMN_DIR := $(SRC_DIR)/common
 BLD_DIR := ./build
 OBJ_DIR := $(BLD_DIR)/artefacts
 
-all: build/artefacts/direcive.o build/artefacts/request.o build/artefacts/server_helper.o build/artefacts/server.o build/artefacts/admin.o build/artefacts/client.o build/server build/admin build/client
+.PHONY: all clean server admin client
+
+all: server admin client
+server:	build/server
+admin:	build/admin
+client:	build/client
+
 
 build/artefacts/direcive.o:	$(CMN_DIR)/direcive.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/direcive.h
 	@echo "[CC]      $@"
@@ -47,6 +53,7 @@ build/admin: $(OBJ_DIR)/admin.o $(OBJ_DIR)/request.o $(OBJ_DIR)/direcive.o
 build/client: $(OBJ_DIR)/client.o $(OBJ_DIR)/request.o
 	@echo "[LD]      $@"
 	@$(CC) $(LFLAGS) $^ -o $@
+
 
 clean:
 	@echo "[CL]      Removing build artefacts and executables."

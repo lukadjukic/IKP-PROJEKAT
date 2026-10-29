@@ -49,7 +49,7 @@ void init_queues(QUEUE * const queues, const unsigned short queues_count);
 void init_coordination(coordination_t * const coordination);
 void delete_coordination(coordination_t * const coordination);
 void delete_all_queues(QUEUE * const queues, const unsigned short queues_count);
-void join_all_threads(const threads_t const * all_threads);
+void join_all_threads(const threads_t * const all_threads);
 void safe_dealocalte(void ** ptr);
 void reciever(queue_t * const pqueue,  coordination_t * const coordination, const int server_socket);
 void sender(queue_t * const pqueue, const int server_socket);

@@ -22,6 +22,7 @@ void * _worker(void * arg) {
     printf("[DEBUG] Worker id: %d started.\n", i);
     worker((arguments -> input ) + i, arguments -> output, i);
     printf("[DEBUG] Worker id: %d finished.\n", i);
+    return NULL;
 }
 
 void * _sender(void * arg) {
@@ -37,6 +38,7 @@ void * _admin(void * arg) {
     printf("[DEBUG] Admin thread started.\n");
     admin(arguments);
     printf("[DEBUG] Admin thread finished.\n");
+    return NULL;
 }
 
 int create_all_threads(threads_t * const all_threads, const arguments_t * const arguments, const  arguments_t * const worker_arguments) {
@@ -51,7 +53,7 @@ int create_all_threads(threads_t * const all_threads, const arguments_t * const 
         return THREAD_CREATION_FAILURE;
     }
 
-    for ( int i = 0; i < all_threads -> workers_count; ++i ) {
+    for (size_t i = 0; i < all_threads -> workers_count; ++i ) {
         if ( pthread_create(all_threads -> worker_threads + i, NULL, _worker, (void*) (worker_arguments + i) )) {
             perror("Creation of worker threads failed.\n");
             return THREAD_CREATION_FAILURE;
