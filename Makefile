@@ -18,7 +18,7 @@ admin:	build/admin
 client:	build/client
 
 
-build/artefacts/directive.o:	$(CMN_DIR)/directive.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h
+build/artefacts/request.o:	$(CMN_DIR)/request.c $(CMN_DIR)/request.h 
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
@@ -26,7 +26,7 @@ build/artefacts/queue.o:	$(CMN_DIR)/queue.c $(CMN_DIR)/request.h $(CMN_DIR)/queu
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-build/artefacts/request.o:	$(CMN_DIR)/request.c $(CMN_DIR)/request.h 
+build/artefacts/directive.o:	$(CMN_DIR)/directive.c $(CMN_DIR)/directive.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
@@ -38,7 +38,7 @@ build/artefacts/server.o:	$(SRC_DIR)/server.c $(CMN_DIR)/request.h $(CMN_DIR)/qu
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-build/artefacts/admin.o:	$(SRC_DIR)/admin.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h
+build/artefacts/admin.o:	$(SRC_DIR)/admin.c $(CMN_DIR)/request.h $(CMN_DIR)/directive.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
@@ -50,7 +50,7 @@ build/server:	$(OBJ_DIR)/server.o $(OBJ_DIR)/request.o $(OBJ_DIR)/queue.o $(OBJ_
 	@echo "[LD]      $@"
 	@$(CC) $(LFLAGS) $^ -o $@
 
-build/admin: $(OBJ_DIR)/admin.o $(OBJ_DIR)/request.o $(OBJ_DIR)/queue.o $(OBJ_DIR)/directive.o
+build/admin: $(OBJ_DIR)/admin.o $(OBJ_DIR)/request.o $(OBJ_DIR)/directive.o
 	@echo "[LD]      $@"
 	@$(CC) $(LFLAGS) $^ -o $@
 
