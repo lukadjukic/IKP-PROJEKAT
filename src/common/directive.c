@@ -44,7 +44,7 @@ void print_directive(const directive_t * const directive) {
     printf("\tParameters: id = %lu, capacity = %lu\n", directive -> params.id, directive -> params.capacity);
 }
 
-ssize_t handle_directive(QUEUE * const queues, const size_t workers_count, coordination_t * const coordinate, const directive_t * const directive) {
+ssize_t handle_directive(queue_t * const queues, const size_t workers_count, coordination_t * const coordinate, const directive_t * const directive) {
     ssize_t result;
 
     switch (directive -> dir) {

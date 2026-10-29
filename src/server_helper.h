@@ -1,8 +1,11 @@
 #ifndef SERVER_HELPER_HEADER
 #define SERVER_HELPER_HEADER
+#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
 #include "./common/queue.h"
 #include "./common/directive.h"
 
@@ -45,10 +48,10 @@ typedef struct arguments_t {
 } arguments_t;
 
 int  init_socket(const int type, const int protocol, const unsigned short port);
-void init_queues(QUEUE * const queues, const unsigned short queues_count);
+void init_queues(queue_t * const queues, const unsigned short queues_count);
 void init_coordination(coordination_t * const coordination);
 void delete_coordination(coordination_t * const coordination);
-void delete_all_queues(QUEUE * const queues, const unsigned short queues_count);
+void delete_all_queues(queue_t * const queues, const unsigned short queues_count);
 void join_all_threads(const threads_t * const all_threads);
 void safe_dealocalte(void ** ptr);
 void reciever(queue_t * const pqueue,  coordination_t * const coordination, const int server_socket);

@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include "./common/queue.h"
+#include "./common/request.h"
 
 #define SERVER_PORT 11000
 #define SERVER_IP "127.0.0.1"

@@ -23,18 +23,13 @@ typedef enum queue_flags_t {
 typedef struct queue_t {
     queue_item_t *  first;
     queue_item_t *  last;
-    queue_flags_t   flags;             
     size_t          capacity;
     size_t          size;
     size_t          producer_count;
     cond_t          consumers_waiting;
     mutex_t         lock;
+    queue_flags_t   flags;             
 } queue_t;
-
-//  Should be removed after renaming
-typedef queue_item_t QUEUE_ITEM;
-typedef queue_t      QUEUE;
-typedef request_t    REQUEST;
 
 void            init_queue(queue_t * const pqueue, const size_t _capacity);
 void            delete_queue(queue_t * const pqueue);
@@ -42,7 +37,7 @@ void            register_producer(queue_t * const pqueue);
 void            deregister_producer(queue_t *  const pqueue);
 size_t          increment_queue_capacity(queue_t * pqueue, size_t increment);
 int             enqueue(queue_t * const pqueue, const request_t * const  prequest);                    //  WON'T TAKE  ownership of request 
-REQUEST*        dequeue(queue_t * const pqueue);                                                       //  WILL GIVE   ownership of request (demands freeing)
+request_t*      dequeue(queue_t * const pqueue);                                                       //  WILL GIVE   ownership of request (demands freeing)
 size_t          increment_queue_capacity(queue_t * const pqueue, const size_t increment);
 void            stop_queue(queue_t * const pqueue);
 void            resume_queue(queue_t * const pqueue);

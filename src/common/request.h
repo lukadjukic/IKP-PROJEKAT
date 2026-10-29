@@ -1,9 +1,6 @@
 #ifndef REQUEST_HEADER
 #define REQUEST_HEADER
 
-#include <stdlib.h>
-#include <string.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
 

@@ -137,7 +137,7 @@ static int recieve_request(request_t * const buffer, sockaddr_in_t * const clien
     } else if (recieved_length < 0){
         perror("Recieve failed.\n");
         return RECIEVE_FAILURE;
-    } else if((size_t)recieved_length < sizeof(REQUEST)){
+    } else if((size_t)recieved_length < sizeof(request_t)){
         perror("Recieved request invalid format.\n");
         return RECIEVE_FAILURE;
     }
@@ -373,7 +373,7 @@ void safe_dealocalte(void ** ptr) {
     * ptr = NULL;
 }
 
-void init_queues(QUEUE * const queues, const unsigned short queues_count) {
+void init_queues(queue_t * const queues, const unsigned short queues_count) {
     for ( int i = 0; i < queues_count; ++i ) {
         if ( i < 2) {
             init_queue( queues + i, QUEUE_CAPACITY_UNLIMITED);
@@ -383,7 +383,7 @@ void init_queues(QUEUE * const queues, const unsigned short queues_count) {
     }
 }
 
-void delete_all_queues(QUEUE * const queues, const unsigned short queues_count) {
+void delete_all_queues(queue_t * const queues, const unsigned short queues_count) {
     for ( int i = 0; i < queues_count; ++i ) {
         delete_queue( queues + i );
     }
@@ -508,7 +508,7 @@ static void deregister_to_worker_queues(queue_t * const queues, const size_t wor
 void worker(queue_t * const input, queue_t * const output, const int id) {
     register_producer(output);
     while (1) {
-        REQUEST* request = dequeue(input);        
+        request_t* request = dequeue(input);        
         if( !process_single_request(input, request) ){
             break;
         }
