@@ -33,14 +33,9 @@ typedef struct {
 } parameters_t;
 
 typedef struct directive_t {
-    directive_code_t    dir;
     parameters_t        params;    
+    directive_code_t    dir; 
 } directive_t;
-
-//  Should be removed after all renaming 
-typedef directive_code_t     DIRECTIVE;
-typedef coordination_flags_t COORDINATION_FLAGS;
-typedef coordination_t       COORDINATION;
 
 void      coordinate(coordination_t * const coordination, const coordination_flags_t new_state);
 void      print_directive(const directive_t * const directive);

@@ -18,7 +18,7 @@ admin:	build/admin
 client:	build/client
 
 
-build/artefacts/direcive.o:	$(CMN_DIR)/direcive.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/direcive.h
+build/artefacts/directive.o:	$(CMN_DIR)/directive.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
@@ -26,15 +26,15 @@ build/artefacts/request.o:	$(CMN_DIR)/request.c $(CMN_DIR)/request.h $(CMN_DIR)/
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-build/artefacts/server_helper.o:	$(SRC_DIR)/server_helper.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/direcive.h $(SRC_DIR)/server_helper.h
+build/artefacts/server_helper.o:	$(SRC_DIR)/server_helper.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRC_DIR)/server_helper.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-build/artefacts/server.o:	$(SRC_DIR)/server.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/direcive.h $(SRC_DIR)/server_helper.h
+build/artefacts/server.o:	$(SRC_DIR)/server.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRC_DIR)/server_helper.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-build/artefacts/admin.o:	$(SRC_DIR)/admin.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/direcive.h
+build/artefacts/admin.o:	$(SRC_DIR)/admin.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
@@ -42,11 +42,11 @@ build/artefacts/client.o:	$(SRC_DIR)/client.c $(CMN_DIR)/request.h $(CMN_DIR)/qu
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-build/server:	$(OBJ_DIR)/server.o $(OBJ_DIR)/request.o $(OBJ_DIR)/direcive.o $(OBJ_DIR)/server_helper.o
+build/server:	$(OBJ_DIR)/server.o $(OBJ_DIR)/request.o $(OBJ_DIR)/directive.o $(OBJ_DIR)/server_helper.o
 	@echo "[LD]      $@"
 	@$(CC) $(LFLAGS) $^ -o $@
 
-build/admin: $(OBJ_DIR)/admin.o $(OBJ_DIR)/request.o $(OBJ_DIR)/direcive.o
+build/admin: $(OBJ_DIR)/admin.o $(OBJ_DIR)/request.o $(OBJ_DIR)/directive.o
 	@echo "[LD]      $@"
 	@$(CC) $(LFLAGS) $^ -o $@
 

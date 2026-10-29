@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "./common/queue.h"
-#include "./common/direcive.h"
+#include "./common/directive.h"
 
 #define RECIEVE_SUCCESS 1
 #define RECIEVE_FAILURE 0

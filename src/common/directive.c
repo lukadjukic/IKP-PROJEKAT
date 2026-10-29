@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "direcive.h"
+#include "directive.h"
 
 static inline unsigned char index_out_of_range(const size_t index, const size_t workers_count) {
     return (index > workers_count -1);
