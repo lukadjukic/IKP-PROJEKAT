@@ -3,7 +3,7 @@
 void * w_reciever(void * arg) {
     printf("[DEBUG] Reciever thread started.\n");
     struct arguments_t * arguments = (struct arguments_t *)arg;
-    reciever(arguments->output, arguments->coordination, arguments->num);
+    reciever(arguments->output, arguments->coordination, (int)arguments->num);
     printf("[DEBUG] Reciever thread finished.\n");
     return NULL;
 }
@@ -18,7 +18,7 @@ void * w_load_balancer(void * arg) {
 
 void * w_worker(void * arg) {
     struct arguments_t * arguments = (struct arguments_t *)arg;
-    int                  i         = arguments->num;
+    int                  i         = (int)arguments->num;
     printf("[DEBUG] Worker id: %d started.\n", i);
     worker((arguments->input) + i, arguments->output, i);
     printf("[DEBUG] Worker id: %d finished.\n", i);
@@ -28,7 +28,7 @@ void * w_worker(void * arg) {
 void * w_sender(void * arg) {
     struct arguments_t * arguments = (struct arguments_t *)arg;
     printf("[DEBUG] Sender thread started.\n");
-    sender(arguments->input, arguments->num);
+    sender(arguments->input, (int)arguments->num);
     printf("[DEBUG] Sender thread finished.\n");
     return NULL;
 }
@@ -74,7 +74,7 @@ int create_all_threads(threads_t * const all_threads, const arguments_t * const 
 }
 
 void initw_worker_args(arguments_t * const worker_arguments, queue_t * const input, queue_t * const output, const size_t workers_count) {
-    for (size_t i = 0; i < workers_count; ++i) {
+    for (ssize_t i = 0; i < workers_count; ++i) {
         worker_arguments[i].input        = input;
         worker_arguments[i].output       = output;
         worker_arguments[i].coordination = NULL;
@@ -90,7 +90,7 @@ void init_main_args(arguments_t * const main_arguments, queue_t * const queues, 
     arguments_t reciever_args = {NULL, queues + 0, main_socket, coordinate};
     arguments_t balancer_args = {queues + 0, queues + 2, 0, NULL};
     arguments_t sender_args   = {queues + 1, NULL, main_socket, NULL};
-    arguments_t admin_args    = {queues + 2, NULL, worker_count, coordinate};
+    arguments_t admin_args    = {queues + 2, NULL, (ssize_t)worker_count, coordinate};
 
     memcpy(main_arguments + 0, &reciever_args, sizeof(arguments_t));
     memcpy(main_arguments + 1, &balancer_args, sizeof(arguments_t));

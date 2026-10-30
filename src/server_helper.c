@@ -30,7 +30,7 @@ static int                  select_worker(queue_t * worker_queues, const size_t 
 static void                 register_to_worker_queues(queue_t * const queues, const size_t workers_count);
 static void                 deregister_to_worker_queues(queue_t * const queues, const size_t workers_count);
 static void                 balance(queue_t * const input, queue_t * const worker_queues, const size_t workers_count);
-static inline unsigned char is_valid_id(const int id, const ssize_t workers_count);
+static inline unsigned char is_valid_id(const int id, const size_t workers_count);
 
 #pragma endregion
 
@@ -476,14 +476,14 @@ int find_first_free_worker(queue_t * worker_queues, const size_t workers_count) 
         size     = worker_queues[i].size;
         pthread_mutex_unlock(&(worker_queues[i].lock));
         if ((!capacity || size < capacity) && !is_queue_stopped(worker_queues + i)) {
-            return i;
+            return (int)i;
         }
     }
     return -1;
 }
 
-static inline unsigned char is_valid_id(const int id, const ssize_t workers_count) {
-    return (id >= 0) && (id < workers_count);
+static inline unsigned char is_valid_id(const int id, const size_t workers_count) {
+    return (id >= 0) && ((size_t)id < workers_count);
 }
 
 static void register_to_worker_queues(queue_t * const queues, const size_t workers_count) {
@@ -568,13 +568,13 @@ unsigned char validate_request(request_t * request) {
 }
 
 ssize_t operation_0(const ssize_t * const arguments) {
-    size_t argument = (size_t)arguments[0];
+    ssize_t argument = (ssize_t)arguments[0];
     return (argument * (argument + 1)) >> 1;
 }
 
 ssize_t operation_1(const ssize_t * const arguments) {
-    ssize_t      argument = arguments[0];
-    const size_t mask     = argument >> (sizeof(ssize_t) * 0x08 - 1);
+    ssize_t       argument = arguments[0];
+    const ssize_t mask     = argument >> (sizeof(ssize_t) * 0x08 - 1);
     return (argument + mask) ^ mask;
 }
 
@@ -590,7 +590,7 @@ ssize_t find_largest_prime_index(const ssize_t * const arguments, const unsigned
     ssize_t largest_prime_index = -1;
     for (size_t i = 0; i < argument_count; ++i)
         if (!is_eliminated[i] && (largest_prime_index == -1 || arguments[i] > arguments[largest_prime_index]))
-            largest_prime_index = i;
+            largest_prime_index = (ssize_t)i;
 
     return largest_prime_index;
 }

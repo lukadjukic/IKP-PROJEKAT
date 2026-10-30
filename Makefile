@@ -29,7 +29,7 @@ format-check:
 
 tidy:
 	@echo "[CT]      Clang tidy:"
-	@clang-tidy $$(find src -type f -name '*.c') -- -std=c11 
+	@clang-tidy $$(find src -type f -name '*.c' -o -name '*.h') -- -std=c11 
 
 # Building starts from here:
 
