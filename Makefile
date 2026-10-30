@@ -31,6 +31,10 @@ tidy:
 	@echo "[CT]      Clang tidy:"
 	@clang-tidy $$(find src -type f -name '*.c' -o -name '*.h') -- -std=c11 
 
+test:
+	@echo "[UT]      Invoking unit testing."
+	@$(MAKE) --no-print-directory -C tests/unit_tests
+
 # Building starts from here:
 
 build/artefacts/request.o:	$(CMN_DIR)/request.c $(CMN_DIR)/request.h 
@@ -75,6 +79,8 @@ build/client: $(OBJ_DIR)/client.o $(OBJ_DIR)/request.o
 
 
 clean:
-	@echo "[CL]      Removing build artefacts and executables."
+	@echo "[CL]      Removing: Build artefacts and executables."
 	@cd $(BLD_DIR) && rm -f $(EXE)
 	@rm -f $(OBJ_DIR)/*
+	@echo "[CL]      Removing: testing executables"
+	@$(MAKE) --no-print-directory -C tests/unit_tests clean
