@@ -1,46 +1,60 @@
-IKP Projekat
+# IKP Projekat  
+![Language](https://img.shields.io/badge/language-C-blue)
+![Standard](https://img.shields.io/badge/C-C11-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+  
+A C project implementing a client-server system consisting of separate client, server, and administrator programs.  
 
-A C project implementing a client-server system with separate client, server, and administrator programs.  
-The emphasys is on the load balancer aspect on the server side as well as using networking functionality and concurency.
+The main focus is on server-side load balancing, network communication, and concurrency.  
 
-Components  
+## Components  
 Server — Handles client requests and manages the system.  
 Client — Connects to the server and sends requests.  
 Admin — Provides administrative functionality.  
 
-Project Structure  
+## Project Structure  
 src/ — C source and header files.  
-build/ — Generated build artifacts.  
+build/ — Generated build artifacts and executables.  
 build/artefacts/ — Compiled object files.  
 profiling/ — Profiling results and screenshots.  
 tests/ — Tests.  
 
-Build
+## Requirements:
+- GCC,
+- GNU Make,
+- POSIX-compliant operating system
+- Clang Tidy    (optional)
+- Clang Format  (optional)
 
-From the repository root directory:
+## Building
 
-```bash
-make
-```
+Building is done from the repository root directory.
 
-Build a specific executable:
+To build a specific executable, run:
 
 ```bash
 make server
 make admin
 make client
 ```
+To be all three, run:
+```bash
+make all
+```
 
-Remove generated files:
+To remove generated files, run:
 
 ```bash
 make clean
 ```
-Usage
 
-Start the server first, then run the client or admin program as needed.
+There are several different build targets:
+```bash
+make test           # To run tests
+make tidy           # To run the static analyzer
+make format         # To format all the source code in /src
+make format-check   # To run the format checker, without changing the files.
+```
+## Usage
 
-Requirements:
-GCC,
-GNU Make,
-Posix compliant OS,
+Start the server first, then run the client or administrator program as needed.
