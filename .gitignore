@@ -1,4 +1,10 @@
+# Ignore everything under build/
 build/*
+
+# Keep directory structure
+!build/**/
+!build/**/.gitkeep
+
 ## VisualStudioCode ###
 .vscode/*
 

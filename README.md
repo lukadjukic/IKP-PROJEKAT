@@ -51,9 +51,13 @@ make clean
 There are several different build targets:
 ```bash
 make test           # To run tests
+make debug          # To compile  all   executables in debug mode
+make debug-server   # To compile server executable  in debug mode
+make debug-admin    # To compile admin  executable  in debug mode
+make debug-client   # To compile client executable  in debug mode
 make tidy           # To run the static analyzer
 make format         # To format all the source code in /src
-make format-check   # To run the format checker, without changing the files.
+make format-check   # To run the format checker, without changing the files in src/
 ```
 ## Usage
 
