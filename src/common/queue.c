@@ -168,8 +168,11 @@ request_t * dequeue(queue_t * const pqueue) {
 
 size_t increment_queue_capacity(queue_t * const pqueue, const size_t increment) {
     pthread_mutex_lock(&(pqueue->lock));
-    pqueue->capacity += increment;
-    size_t capacity = pqueue->capacity;
+    size_t capacity = QUEUE_CAPACITY_UNLIMITED;
+    if (pqueue->capacity != QUEUE_CAPACITY_UNLIMITED) {
+        pqueue->capacity += increment;
+        capacity = pqueue->capacity;
+    }
     pthread_mutex_unlock(&(pqueue->lock));
     return capacity;
 }

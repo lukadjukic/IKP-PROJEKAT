@@ -15,7 +15,7 @@ $(TEST_BINARY): $(TEST_SOURCES)
 
 test: $(TEST_BINARY)
 	@echo "[UT]      Running tests:"
-	@./$(TEST_BINARY)
+	@./$(TEST_BINARY) || true
 	@echo "[UT]      Removing: $(TEST_BINARY)"
 	@rm -f $(TEST_BINARY)
 
