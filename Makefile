@@ -1,6 +1,6 @@
 # Compiler, compiler and loader flags
 CC := gcc
-CFLAGS := -c -Wall -Wextra -std=c11
+CFLAGS := -c -Wall -Wextra -Wpedantic -std=c11
 LFLAGS :=
 #	Executables
 EXE :=	server client admin

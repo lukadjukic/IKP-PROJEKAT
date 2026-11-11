@@ -74,11 +74,11 @@ int create_all_threads(threads_t * const all_threads, const arguments_t * const 
 }
 
 void initw_worker_args(arguments_t * const worker_arguments, queue_t * const input, queue_t * const output, const size_t workers_count) {
-    for (ssize_t i = 0; i < workers_count; ++i) {
+    for (size_t i = 0; i < workers_count; ++i) {
         worker_arguments[i].input        = input;
         worker_arguments[i].output       = output;
         worker_arguments[i].coordination = NULL;
-        worker_arguments[i].num          = i;
+        worker_arguments[i].num          = (ssize_t)i;
     }
 }
 
