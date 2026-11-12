@@ -13,10 +13,9 @@ Client — Connects to the server and sends requests.
 Admin — Provides administrative functionality.  
 
 ## Project Structure  
-src/ — C source and header files.  
 build/ — Generated build artifacts and executables.  
-build/artefacts/ — Compiled object files.  
 profiling/ — Profiling results and screenshots.  
+src/ — C source and header files.  
 tests/ — Tests.  
 
 ## Requirements:
