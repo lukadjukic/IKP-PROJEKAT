@@ -2,7 +2,7 @@
 build/*
 
 # Keep directory structure
-!build/**/
+build/**/
 !build/**/.gitkeep
 
 ## VisualStudioCode ###
