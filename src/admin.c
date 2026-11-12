@@ -7,32 +7,25 @@
 #include "./common/directive.h"
 #include "./common/request.h"
 
-#define SERVER_PORT 11001
-#define TEST_PORT   11000
-#define SERVER_IP   "127.0.0.1"
-#define BUF_SIZE    1024
+#define SERVER_PORT   11001
+#define TEST_PORT     11000
+#define SERVER_IP     "127.0.0.1"
+#define BUF_SIZE      1024
+#define TEST_FILENAME "./tests/integration/tests.txt"
 
 typedef struct test_t {
     request_t request;
     ssize_t   expected_answer;
 } test_t;
 
-int           connect_to_server();
-void          communicate_with_server(const int server_socket);
-void          set_server_address(sockaddr_in_t * address, const unsigned short server_port, const char * server_ip);
-int           ask_user_for_directive(directive_t * const directive, unsigned char * const exit);
-void          print_result(const ssize_t result);
-void          print_menu();
-unsigned char should_end(const directive_t * const directive, const ssize_t result);
-int           fill_directive(directive_t * const directive, int * const error);
-void          get_params(directive_t * const directive);
-void          get_directive_code(int * result);
-void          test_primes(void);
+int  connect_to_server();
+void communicate_with_server(const int server_socket);
+void set_server_address(sockaddr_in_t * address, const sa_family_t family, const unsigned short server_port, const char * server_ip);
+void test_primes(const char * const in_filename);
 
 int main() {
-    int server_socket;
+    int server_socket = connect_to_server();
 
-    server_socket = connect_to_server();
     if (server_socket < 0)
         return -1;
 
@@ -57,7 +50,7 @@ int connect_to_server() {
         return admin_socket;
     }
 
-    set_server_address(&server_address, SERVER_PORT, SERVER_IP);
+    set_server_address(&server_address, AF_INET, SERVER_PORT, SERVER_IP);
 
     if (connect(admin_socket, (struct sockaddr *)&server_address, sizeof(struct sockaddr)) < 0) {
         perror("Connection failed.\n");
@@ -67,36 +60,59 @@ int connect_to_server() {
     return admin_socket;
 }
 
-void set_server_address(sockaddr_in_t * address, const unsigned short server_port, const char * server_ip) {
-    address->sin_family      = AF_INET;
+void set_server_address(sockaddr_in_t * address, const sa_family_t family, const unsigned short server_port, const char * server_ip) {
+    address->sin_family      = family;
     address->sin_port        = htons(server_port);
     address->sin_addr.s_addr = inet_addr(server_ip);
 }
 
-void communicate_with_server(const int server_socket) {
-    ssize_t       result;
-    directive_t   directive;
-    unsigned char exit = 0;
+int get_option(void) {
+    int option = -1;
 
-    while (1) {
-        if (ask_user_for_directive(&directive, &exit) == 4)
-            continue;
-        if (exit)
-            break;
-
-        print_directive(&directive);
-        send(server_socket, (void *)&directive, sizeof(directive_t), 0);
-        recv(server_socket, (void *)&result, sizeof(ssize_t), 0);
-        print_result(result);
-
-        if (should_end(&directive, result)) {
-            break;
-        }
+    while (option < 0 || option > 5) {
+        printf("============= MENU =============\n");
+        printf("0) Exit\n");
+        printf("1) Halt\n");
+        printf("2) Stop worker\n");
+        printf("3) Resume worker\n");
+        printf("4) Increse worker max. load\n");
+        printf("5) Test primes\n");
+        printf("================================\n");
+        printf(">>> ");
+        scanf("%d", &option);
     }
+
+    return option;
 }
 
-unsigned char should_end(const directive_t * const directive, const ssize_t result) {
-    return (directive->dir == DIR_HALT) && (result == DIRECTIVE_SUCCESS);
+size_t get_size_t(const char * const param_name) {
+    size_t value = 0;
+    printf("Enter %s:\n", param_name);
+    printf(">>>");
+    scanf("%zu", &value);
+    return value;
+}
+
+void fill_params(directive_t * directive) {
+    directive->capacity = 0;
+    directive->id       = 0;
+
+    switch (directive->dir) {
+    case DIR_THEAD_STOP:
+        directive->id = get_size_t("id");
+        break;
+    case DIR_THREAD_CONTINUE:
+        directive->id = get_size_t("id");
+        break;
+    case DIR_THREAD_INCREASE_CAPACITY:
+        directive->id       = get_size_t("id");
+        directive->capacity = get_size_t("increase amount");
+        break;
+    case DIR_HALT:
+        break;
+    default:
+        break;
+    }
 }
 
 void print_result(const ssize_t result) {
@@ -122,88 +138,45 @@ void print_result(const ssize_t result) {
     }
 }
 
-int ask_user_for_directive(directive_t * const directive, unsigned char * const exit) {
-    int error, result;
-    do {
-        int answer;
-        print_menu();
-        scanf("%d", &answer);
-        if (!answer) {
-            *exit = 1;
-            return -1;
+unsigned char should_end(const directive_t * const directive, const ssize_t result) {
+    return (directive->dir == DIR_HALT) && (result == DIRECTIVE_SUCCESS);
+}
+
+void communicate_with_server(const int server_socket) {
+    directive_t directive;
+    ssize_t     result;
+
+    while (1) {
+        int option = get_option();
+        if (option == 0) {
+            break;
+        } else if (option == 5) {
+            test_primes(TEST_FILENAME);
+            continue;
         }
 
-        *exit  = 0;
-        result = fill_directive(directive, &error);
-    } while (error);
-    return result;
-}
+        directive.dir = (dcode_t)(0x1 << (option - 1));
+        fill_params(&directive);
 
-void print_menu() {
-    printf("============= MENU =============\n");
-    printf("0) Exit\n");
-    printf("1) Execute directive\n");
-    printf("================================\n");
-    printf(">>> ");
-}
+        print_directive(&directive);
+        send(server_socket, (void *)&directive, sizeof(directive_t), 0);
+        recv(server_socket, (void *)&result, sizeof(ssize_t), 0);
+        print_result(result);
 
-int fill_directive(directive_t * const directive, int * const error) {
-    int result;
-    get_directive_code(&result);
-    if (result < 0 || result > 4) {
-        printf("Error. Invalid directive.\n");
-        *error = 1;
-        return -1;
+        if (should_end(&directive, result)) {
+            break;
+        }
     }
-
-    if (result == 4) {
-        test_primes();
-        *error = 0;
-        return 4;
-    }
-
-    directive->dir = (dcode_t)(0x01 << result);
-    *error         = 0;
-
-    if (directive->dir == DIR_HALT) {
-        directive->capacity = 0;
-        directive->id       = 0;
-        return directive->dir;
-    }
-    get_params(directive);
-    return directive->dir;
-}
-
-void get_directive_code(int * result) {
-    printf("Directive options: \n");
-    printf("0) Halt\n");
-    printf("1) Stop worker\n");
-    printf("2) Resume worker\n");
-    printf("3) Increse worker max. load\n");
-    printf("4) Test primes\n");
-    printf(">>> ");
-    scanf("%d", result);
-}
-
-void get_params(directive_t * const directive) {
-    printf("Enter worker Id: ");
-    scanf("%lu", &(directive->id));
-
-    if (directive->dir != DIR_THREAD_INCREASE_CAPACITY) {
-        directive->capacity = 0;
-        return;
-    }
-
-    printf("Enter load increase: ");
-    scanf("%lu", &(directive->capacity));
 }
 
 FILE * safe_fopen(const char * const filename, const char * const modes) {
     FILE * file = fopen(filename, modes);
+
     if (!file) {
         perror("Could not open the specified file with the specified modes.\n");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
+
     return file;
 }
 
@@ -295,35 +268,35 @@ void print_summary(const int count, const int passed) {
     }
 }
 
-void test_primes() {
-    int           tests_count = 0, tests_passed = 0;
-    int           sock;
+void test_primes(const char * const in_filename) {
     sockaddr_in_t server_address;
     test_t        test;
-    FILE *        in_file;
 
-    const char * const in_filename = "../tests/tests.txt";
-
-    in_file = safe_fopen(in_filename, "r+");
-
-    sock = create_socket();
+    FILE * in_file = safe_fopen(in_filename, "r+");
+    int    sock    = create_socket();
 
     if (sock < 0) {
         safe_fclose(in_file);
         return;
+    } else if (!in_file) {
+        return;
     }
 
-    set_server_address(&server_address, TEST_PORT, SERVER_IP);
+    set_server_address(&server_address, AF_INET, TEST_PORT, SERVER_IP);
+
+    int tests_count  = 0;
+    int tests_passed = 0;
 
     while (fill_test(&test, in_file)) {
         if (send_request_recieve_id(&(test.request), &server_address, sock) < 0) {
             break;
         }
         recieve_response(&(test.request), &server_address, sock);
-        ++tests_count;
+
+        tests_count++;
         print_test(&test);
         if (test.expected_answer == test.request.result)
-            ++tests_passed;
+            tests_passed++;
     }
 
     safe_fclose(in_file);
