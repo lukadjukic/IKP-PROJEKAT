@@ -8,59 +8,44 @@
 
 #define SERVER_PORT 11000
 #define SERVER_IP   "127.0.0.1"
-int counter = 0;
 
-int           create_socket();
+int           create_socket(int domain, int port, int protocol);
+void          set_server_address(sockaddr_in_t * address, const sa_family_t family, const unsigned short port, const char * const server_ip);
 int           send_request_recieve_id(request_t * const request, const sockaddr_in_t * server_address, const int client_socket);
 void          recieve_response(request_t * const request, const sockaddr_in_t * const server_address, const int client_socket);
-void          set_server_address(sockaddr_in_t * address);
 unsigned char fill_request(request_t * const request, FILE * file);
-FILE *        safe_fopen(const char * const filename, const char * const modes);
-void          safe_fclose(FILE * file);
 void          print_response(const request_t * const request, FILE * file);
 
 int main() {
-    int           sock;
     sockaddr_in_t server_address;
     request_t     request;
-    FILE *        in_file;
-    FILE *        out_file;
 
-    const char * const in_filename  = "input.txt";
-    const char * const out_filename = "output.txt";
-
-    out_file = safe_fopen(out_filename, "w+");
-    in_file  = safe_fopen(in_filename, "r+");
-
-    sock = create_socket();
+    int sock = create_socket(AF_INET, SOCK_DGRAM, 0);
 
     if (sock < 0) {
-        safe_fclose(in_file);
-        safe_fclose(out_file);
         return -1;
     }
 
-    set_server_address(&server_address);
+    set_server_address(&server_address, AF_INET, SERVER_PORT, SERVER_IP);
 
-    while (fill_request(&request, in_file)) {
+    while (fill_request(&request, stdin)) {
         if (send_request_recieve_id(&request, &server_address, sock) < 0) {
             break;
         }
         recieve_response(&request, &server_address, sock);
-        print_response(&request, out_file);
+        print_response(&request, stdout);
     }
 
+    shutdown(sock, SHUT_RDWR);
     close(sock);
-    safe_fclose(in_file);
-    safe_fclose(out_file);
 
     return 0;
 }
 
 #pragma region functions
 
-int create_socket() {
-    int client_socket = socket(AF_INET, SOCK_DGRAM, 0);
+int create_socket(int domain, int type, int protocol) {
+    int client_socket = socket(domain, type, protocol);
 
     if (client_socket < 0) {
         perror("Socket creation failed");
@@ -69,11 +54,11 @@ int create_socket() {
     return client_socket;
 }
 
-void set_server_address(sockaddr_in_t * address) {
+void set_server_address(sockaddr_in_t * address, const sa_family_t family, const unsigned short port, const char * const server_ip) {
 
-    address->sin_family      = AF_INET;
-    address->sin_port        = htons(SERVER_PORT);
-    address->sin_addr.s_addr = inet_addr(SERVER_IP);
+    address->sin_family      = family;
+    address->sin_port        = htons(port);
+    address->sin_addr.s_addr = inet_addr(server_ip);
 }
 
 int send_request_recieve_id(request_t * const request, const sockaddr_in_t * server_address, const int client_socket) {
@@ -89,7 +74,6 @@ int send_request_recieve_id(request_t * const request, const sockaddr_in_t * ser
         return -1;
     }
 
-    ++counter;
     return 1;
 }
 
@@ -116,7 +100,6 @@ unsigned char fill_request(request_t * const request, FILE * file) {
             return 0;
         if (fscanf(file, "%ld ", &(request->arguments[i])) != 1)
             return 0;
-        // fscanf(file, "\n");
     }
 
     return 1;
@@ -124,22 +107,6 @@ unsigned char fill_request(request_t * const request, FILE * file) {
 
 void print_response(const request_t * const request, FILE * file) {
     fprintf(file, "%lu %hhu %u %u %u %ld\n", request->id, request->operation, request->flags.stopped, request->flags.invalid, request->flags.handled, request->result);
-}
-
-FILE * safe_fopen(const char * const filename, const char * const modes) {
-    FILE * file = fopen(filename, modes);
-    if (!file) {
-        perror("Could not open the specified file with the specified modes.\n");
-        exit(EXIT_FAILURE);
-    }
-    return file;
-}
-
-void safe_fclose(FILE * file) {
-    if (file) {
-        fclose(file);
-        file = NULL;
-    }
 }
 
 #pragma endregion
