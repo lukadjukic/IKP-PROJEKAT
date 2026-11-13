@@ -20,11 +20,11 @@ typedef struct {
 
 typedef struct request_t {
     size_t          id;
-    request_flags_t flags;
-    unsigned char   operation;
     ssize_t         arguments[MAX_ARGUMENTS];
     ssize_t         result;
     sockaddr_in_t   client_addr;
+    unsigned char   operation;
+    request_flags_t flags;
 } request_t;
 
 void print_request(const request_t * const prequest);
