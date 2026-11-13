@@ -2,20 +2,21 @@
 CC := gcc
 CFLAGS_COMMON	:= -c -Wall -Wextra -Wpedantic -std=c11
 LFLAGS_COMMON	:=
-CFLAGS  		:= $(CFLAGS_COMMON) -O1
-LFLAGS			:= $(LFLAGS_COMMON)
 
 #	Executables
 EXE :=	server client admin
 
 # Directory paths: source, common, build and artefacts
-BUILD_ROOT	:= ./build
-BLD_DIR 	:= $(BUILD_ROOT)/release
-OBJ_DIR 	:= $(BLD_DIR)/artefacts
 SRC_DIR 	:= ./src
 CMN_DIR 	:= $(SRC_DIR)/common
+BUILD_ROOT	:= ./build
+RLS_DIR 	:= $(BUILD_ROOT)/release
+DBG_DIR		:= $(BUILD_ROOT)/debug
+SAN_DIR		:= $(BUILD_ROOT)/sanitize
 
-.PHONY: all clean release server admin client debug debug-server debug-admin debug-client format format-check tidy test
+.PHONY: format format-check tidy test
+.PHONY: all clean release server admin client 
+.PHONY: grind sanitize debug debug-server debug-admin debug-client
 
 ############################################################  TARGETS THAT DO NOT COMPILE  ############################################################
 
@@ -41,8 +42,14 @@ test:
 
 # The default mode is release.
 DEBUG ?= false
+ASAN  ?= false
 
 # If debug target is specified, make is invoked recursively with DEBUG=true.
+grind: debug-server
+	@echo "[GR]      Running server with valgrind."
+	@valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite --error-exitcode=1 $(DBG_DIR)/server 
+sanitize:
+	@$(MAKE) --no-print-directory DEBUG=true ASAN=true all
 debug:
 	@$(MAKE) --no-print-directory DEBUG=true all
 debug-server:
@@ -52,12 +59,24 @@ debug-admin:
 debug-client:
 	@$(MAKE) --no-print-directory DEBUG=true client
 
-# If debug mode is selected, the output directories and compilation flags are changed.
+# Depending on the mode the output directories and compilation flags are changed.
 ifeq ($(DEBUG),true)
-BLD_DIR := $(BUILD_ROOT)/debug
+ifeq ($(ASAN),true)
+BLD_DIR := $(SAN_DIR)
 OBJ_DIR := $(BLD_DIR)/artefacts
 CFLAGS  := $(CFLAGS_COMMON) -fsanitize=address,undefined -fno-omit-frame-pointer -g3
-LFLAGS	:= $(LFLAGS_COMMON) -fsanitize=address,undefined
+LFLAGS	:= $(LFLAGS_COMMON) -fsanitize=address,undefined 
+else
+BLD_DIR := $(DBG_DIR)
+OBJ_DIR := $(BLD_DIR)/artefacts
+CFLAGS  := $(CFLAGS_COMMON) -g3
+LFLAGS	:= $(LFLAGS_COMMON)
+endif
+else
+BLD_DIR := $(RLS_DIR)
+OBJ_DIR := $(BLD_DIR)/artefacts
+CFLAGS  := $(CFLAGS_COMMON) -O1
+LFLAGS	:= $(LFLAGS_COMMON)
 endif
 
 ############################################################   BUILDING STARTS FROM HERE   ############################################################

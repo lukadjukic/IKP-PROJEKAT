@@ -24,6 +24,7 @@ tests/ — Tests.
 - POSIX-compliant operating system
 - Clang Tidy    (optional)
 - Clang Format  (optional)
+- Valgrind      (optional)
 
 ## Building
 
@@ -50,13 +51,16 @@ make clean
 There are several different build targets:
 ```bash
 make test           # To run tests
+make tidy           # To run the static analyzer
+make format         # To format all the source code in /src
+make format-check   # To run the format checker, without changing the files in src/
+
 make debug          # To compile  all   executables in debug mode
 make debug-server   # To compile server executable  in debug mode
 make debug-admin    # To compile admin  executable  in debug mode
 make debug-client   # To compile client executable  in debug mode
-make tidy           # To run the static analyzer
-make format         # To format all the source code in /src
-make format-check   # To run the format checker, without changing the files in src/
+make grind          # To compile server executable  in debug mode, and run it with valgrind
+make sanitize       # To compile all executables with sanitizer enabled
 ```
 ## Usage
 

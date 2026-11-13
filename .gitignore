@@ -1,9 +1,11 @@
-# Ignore everything under build/
-build/*
+# Ignore all files in build directories
+/build/**
 
-# Keep directory structure
-build/**/
-!build/**/.gitkeep
+# Allow Git to traverse directories
+!/build/**/
+
+# Allow .gitkeep at any depth
+!/build/**/.gitkeep
 
 ## VisualStudioCode ###
 .vscode/*
