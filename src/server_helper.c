@@ -87,7 +87,14 @@ static void recieve_requests(queue_t * const pqueue, coordination_t * const coor
         if (!recieved_valid_request(&buffer, &counter, server_socket)) {
             continue;
         }
-        enqueue(pqueue, &buffer);
+
+        request_t * request = (request_t *) malloc(sizeof(request_t));
+        if (!request) {
+            continue; // Should halt? Maybe.
+        }
+        memcpy(request, &buffer, sizeof(request_t));
+        
+        enqueue(pqueue, request);
     }
 }
 
@@ -449,7 +456,6 @@ static void balance(queue_t * const input, queue_t * const worker_queues, const 
 
         printf("[Load Balancer] Request id: %lu assigned to thread %d.\n", request->id, selected_worker);
         enqueue(worker_queues + selected_worker, request);
-        safe_dealocalte((void **)&request);
     }
 }
 
@@ -511,7 +517,6 @@ void worker(queue_t * const input, queue_t * const output, const int id) {
         }
         printf("[Worker %d] Worker handled request id: %lu.\n", id, request->id);
         enqueue(output, request);
-        safe_dealocalte((void **)&request);
     }
     deregister_producer(output);
 }

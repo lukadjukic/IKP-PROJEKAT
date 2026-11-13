@@ -34,11 +34,11 @@ void delete_queue(queue_t * const pqueue) {
     pqueue->last  = NULL;
 }
 
-inline bool is_started(const queue_t * const pqueue) {
+static inline bool is_started(const queue_t * const pqueue) {
     return (pqueue->flags & QUEUE_STARTED) != 0; // Expects mutex to be locked.
 }
 
-inline bool is_stopped(const queue_t * const pqueue) {
+static inline bool is_stopped(const queue_t * const pqueue) {
     return (pqueue->flags & QUEUE_STOPPED) != 0; // Expects mutex to be locked.
 }
 
@@ -70,7 +70,6 @@ void deregister_producer(queue_t * const pqueue) {
 #pragma region enqueue
 
 static inline bool is_queue_full(queue_t * const pqueue) {
-    //  If capacity == 0 <==> queue capacity is limitless
     pthread_mutex_lock(&(pqueue->lock));
     bool result = (pqueue->capacity != QUEUE_CAPACITY_UNLIMITED) && (pqueue->size >= pqueue->capacity);
     pthread_mutex_unlock(&(pqueue->lock));
@@ -96,7 +95,7 @@ static void enqueue_item(queue_t * const pqueue, queue_item_t * const pitem) {
     pthread_cond_signal(&(pqueue->consumers_waiting));
 }
 
-int enqueue(queue_t * const pqueue, const request_t * const prequest) {
+int enqueue(queue_t * const pqueue, request_t * prequest) {
     if (is_queue_full(pqueue)) {
         return QUEUE_FULL;
     }
@@ -106,7 +105,7 @@ int enqueue(queue_t * const pqueue, const request_t * const prequest) {
         return OUT_OF_MEMORY;
     }
 
-    memcpy(&(pqueue_item->request), prequest, sizeof(request_t));
+    pqueue_item->request = prequest;
     enqueue_item(pqueue, pqueue_item);
     return SUCCESS;
 }
@@ -159,15 +158,10 @@ request_t * dequeue(queue_t * const pqueue) {
         return NULL;
     }
 
-    request_t * request = (request_t *)malloc(sizeof(request_t));
-    if (!request) {
-        perror("Unable to allocate memory for request.\n");
-        return NULL;
-    }
-
-    memcpy(request, &(first->request), sizeof(request_t));
+    request_t * request = first->request;
+    first->request = NULL;
     free(first);
-    first = NULL;
+
     return request;
 }
 
