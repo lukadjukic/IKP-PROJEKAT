@@ -1,5 +1,6 @@
 #ifndef QUEUE_HEADER
 #define QUEUE_HEADER
+#include <stdbool.h>
 #include "request.h"
 
 #define QUEUE_CAPACITY_UNLIMITED (0)
@@ -31,16 +32,16 @@ typedef struct queue_t {
     queue_flags_t  flags;
 } queue_t;
 
-void          init_queue(queue_t * const pqueue, const size_t _capacity);
-void          delete_queue(queue_t * const pqueue);
-void          register_producer(queue_t * const pqueue);
-void          deregister_producer(queue_t * const pqueue);
-size_t        increment_queue_capacity(queue_t * pqueue, size_t increment);
-int           enqueue(queue_t * const pqueue, const request_t * const prequest); //  WON'T TAKE  ownership of request
-request_t *   dequeue(queue_t * const pqueue);                                   //  WILL GIVE   ownership of request (demands freeing)
-size_t        increment_queue_capacity(queue_t * const pqueue, const size_t increment);
-void          stop_queue(queue_t * const pqueue);
-void          resume_queue(queue_t * const pqueue);
-unsigned char is_queue_stopped(queue_t * const pqueue);
+void        init_queue(queue_t * const pqueue, const size_t _capacity);
+void        delete_queue(queue_t * const pqueue); // not thead safe
+void        register_producer(queue_t * const pqueue);
+void        deregister_producer(queue_t * const pqueue);
+size_t      increment_queue_capacity(queue_t * pqueue, size_t increment);
+int         enqueue(queue_t * const pqueue, const request_t * const prequest); //  WON'T TAKE  ownership of request
+request_t * dequeue(queue_t * const pqueue);                                   //  WILL GIVE   ownership of request (demands freeing)
+size_t      increment_queue_capacity(queue_t * const pqueue, const size_t increment);
+void        stop_queue(queue_t * const pqueue);
+void        resume_queue(queue_t * const pqueue);
+bool        is_queue_stopped(queue_t * const pqueue);
 
 #endif

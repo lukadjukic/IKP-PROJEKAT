@@ -34,6 +34,14 @@ void delete_queue(queue_t * const pqueue) {
     pqueue->last  = NULL;
 }
 
+inline bool is_started(const queue_t * const pqueue) {
+    return (pqueue->flags & QUEUE_STARTED) != 0; // Expects mutex to be locked.
+}
+
+inline bool is_stopped(const queue_t * const pqueue) {
+    return (pqueue->flags & QUEUE_STOPPED) != 0; // Expects mutex to be locked.
+}
+
 void register_producer(queue_t * const pqueue) {
     pthread_mutex_lock(&(pqueue->lock));
     pqueue->flags |= QUEUE_STARTED;
@@ -43,9 +51,17 @@ void register_producer(queue_t * const pqueue) {
 
 void deregister_producer(queue_t * const pqueue) {
     pthread_mutex_lock(&(pqueue->lock));
-    if (--(pqueue->producer_count) <= 0) {
+
+    if (pqueue->producer_count == 0) {
+        pthread_mutex_unlock(&(pqueue->lock));
+        return;
+    }
+
+    pqueue->producer_count--;
+    if (pqueue->producer_count == 0) {
         pthread_cond_broadcast(&(pqueue->consumers_waiting));
     }
+
     pthread_mutex_unlock(&(pqueue->lock));
 }
 
@@ -53,15 +69,15 @@ void deregister_producer(queue_t * const pqueue) {
 
 #pragma region enqueue
 
-static unsigned char is_queue_full(queue_t * const pqueue) {
+static inline bool is_queue_full(queue_t * const pqueue) {
     //  If capacity == 0 <==> queue capacity is limitless
     pthread_mutex_lock(&(pqueue->lock));
-    unsigned char result = (pqueue->capacity > QUEUE_CAPACITY_UNLIMITED) && (pqueue->size >= pqueue->capacity);
+    bool result = (pqueue->capacity != QUEUE_CAPACITY_UNLIMITED) && (pqueue->size >= pqueue->capacity);
     pthread_mutex_unlock(&(pqueue->lock));
     return result;
 }
 
-static void enqueue_handle_pointers(queue_t * const pqueue, queue_item_t * const pitem) {
+static inline void enqueue_handle_pointers(queue_t * const pqueue, queue_item_t * const pitem) {
     pitem->prev  = NULL;
     pitem->next  = pqueue->last;
     pqueue->last = pitem;
@@ -99,7 +115,7 @@ int enqueue(queue_t * const pqueue, const request_t * const prequest) {
 
 #pragma region dequeue
 
-static void dequeue_handle_pointers(queue_t * const pqueue, queue_item_t * const temp) {
+static inline void dequeue_handle_pointers(queue_t * const pqueue, queue_item_t * const temp) {
     pqueue->first = temp->prev;
     temp->prev    = NULL;
 
@@ -110,33 +126,26 @@ static void dequeue_handle_pointers(queue_t * const pqueue, queue_item_t * const
     }
 }
 
-static inline unsigned char should_wait(const queue_t * const pqueue) {
-    return !(pqueue->flags & QUEUE_STARTED) || ((pqueue->first == NULL) && (pqueue->producer_count > 0));
+static inline bool should_wait(const queue_t * const pqueue) {
+    return !is_started(pqueue) || ((pqueue->first == NULL) && (pqueue->producer_count > 0));
 }
 
-static inline unsigned char is_end(const queue_t * const pqueue) {
-    return (pqueue->first == NULL) && (pqueue->producer_count <= 0);
-}
-
-static unsigned char wait_for_producer(queue_t * const pqueue) {
-    while (should_wait(pqueue)) {
-        // printf("Consumer waiting....\n");
-        pthread_cond_wait(&(pqueue->consumers_waiting), &(pqueue->lock));
-    }
-    // printf("Consumer awakened.\n");
-    if (is_end(pqueue)) {
-        // printf("Consumer doesn't see any producers. Exiting...\n");
-        return 0;
-    }
-    return 1;
+static inline bool is_end(const queue_t * const pqueue) {
+    return is_started(pqueue) && (pqueue->first == NULL) && (pqueue->producer_count == 0);
 }
 
 static queue_item_t * dequeue_item(queue_t * const pqueue) {
     pthread_mutex_lock(&(pqueue->lock));
-    if (!wait_for_producer(pqueue)) {
+
+    while (should_wait(pqueue)) {
+        pthread_cond_wait(&(pqueue->consumers_waiting), &(pqueue->lock));
+    }
+
+    if (is_end(pqueue)) {
         pthread_mutex_unlock(&(pqueue->lock));
         return NULL;
     }
+
     queue_item_t * temp = pqueue->first;
     dequeue_handle_pointers(pqueue, temp);
     pqueue->size--;
@@ -189,9 +198,9 @@ void resume_queue(queue_t * const pqueue) {
     pthread_mutex_unlock(&(pqueue->lock));
 }
 
-unsigned char is_queue_stopped(queue_t * const pqueue) {
+bool is_queue_stopped(queue_t * const pqueue) {
     pthread_mutex_lock(&(pqueue->lock));
-    unsigned char stopped = pqueue->flags & QUEUE_STOPPED;
+    bool stopped = is_stopped(pqueue);
     pthread_mutex_unlock(&(pqueue->lock));
     return stopped;
 }
