@@ -88,12 +88,12 @@ static void recieve_requests(queue_t * const pqueue, coordination_t * const coor
             continue;
         }
 
-        request_t * request = (request_t *) malloc(sizeof(request_t));
+        request_t * request = (request_t *)malloc(sizeof(request_t));
         if (!request) {
             continue; // Should halt? Maybe.
         }
         memcpy(request, &buffer, sizeof(request_t));
-        
+
         enqueue(pqueue, request);
     }
 }

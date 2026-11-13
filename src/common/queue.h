@@ -33,12 +33,12 @@ typedef struct queue_t {
 } queue_t;
 
 void        init_queue(queue_t * const pqueue, const size_t _capacity); // not thead safe
-void        delete_queue(queue_t * const pqueue); // not thead safe
+void        delete_queue(queue_t * const pqueue);                       // not thead safe
 void        register_producer(queue_t * const pqueue);
 void        deregister_producer(queue_t * const pqueue);
 size_t      increment_queue_capacity(queue_t * pqueue, size_t increment);
-int         enqueue(queue_t * const pqueue, request_t * prequest);             //  WILL TAKE ownership of request
-request_t * dequeue(queue_t * const pqueue);                                   //  WILL GIVE ownership of request (demands freeing)
+int         enqueue(queue_t * const pqueue, request_t * prequest); //  WILL TAKE ownership of request
+request_t * dequeue(queue_t * const pqueue);                       //  WILL GIVE ownership of request (demands freeing)
 size_t      increment_queue_capacity(queue_t * const pqueue, const size_t increment);
 void        stop_queue(queue_t * const pqueue);
 void        resume_queue(queue_t * const pqueue);

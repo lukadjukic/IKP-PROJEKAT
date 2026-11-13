@@ -159,7 +159,7 @@ request_t * dequeue(queue_t * const pqueue) {
     }
 
     request_t * retval = first->item;
-    first->item = NULL;
+    first->item        = NULL;
     free(first);
 
     return retval;
