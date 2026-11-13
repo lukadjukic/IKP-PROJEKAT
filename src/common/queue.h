@@ -12,7 +12,7 @@
 typedef struct queue_item_t {
     struct queue_item_t * next;
     struct queue_item_t * prev;
-    request_t *           request;
+    request_t *           item;
 } queue_item_t;
 
 typedef enum queue_flags_t {

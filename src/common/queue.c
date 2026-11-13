@@ -16,18 +16,18 @@ void init_queue(queue_t * const pqueue, const size_t _capacity) {
     pthread_cond_init(&(pqueue->consumers_waiting), NULL);
 }
 
-static void delete_all_requests(queue_t * const pqueue) {
-    request_t * prequest = NULL;
+static void delete_all_items(queue_t * const pqueue) {
+    request_t * item = NULL;
     while (pqueue->first) {
-        prequest = dequeue(pqueue);
-        if (prequest)
-            free(prequest);
-        prequest = NULL;
+        item = dequeue(pqueue);
+        if (item)
+            free(item);
+        item = NULL;
     }
 }
 
 void delete_queue(queue_t * const pqueue) {
-    delete_all_requests(pqueue);
+    delete_all_items(pqueue);
     pthread_mutex_destroy(&(pqueue->lock));
     pthread_cond_destroy(&(pqueue->consumers_waiting));
     pqueue->first = NULL;
@@ -95,7 +95,7 @@ static void enqueue_item(queue_t * const pqueue, queue_item_t * const pitem) {
     pthread_cond_signal(&(pqueue->consumers_waiting));
 }
 
-int enqueue(queue_t * const pqueue, request_t * prequest) {
+int enqueue(queue_t * const pqueue, request_t * pitem) {
     if (is_queue_full(pqueue)) {
         return QUEUE_FULL;
     }
@@ -105,7 +105,7 @@ int enqueue(queue_t * const pqueue, request_t * prequest) {
         return OUT_OF_MEMORY;
     }
 
-    pqueue_item->request = prequest;
+    pqueue_item->item = pitem;
     enqueue_item(pqueue, pqueue_item);
     return SUCCESS;
 }
@@ -158,11 +158,11 @@ request_t * dequeue(queue_t * const pqueue) {
         return NULL;
     }
 
-    request_t * request = first->request;
-    first->request = NULL;
+    request_t * retval = first->item;
+    first->item = NULL;
     free(first);
 
-    return request;
+    return retval;
 }
 
 #pragma endregion
