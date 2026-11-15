@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <stdbool.h>
 #include "./common/directive.h"
 #include "./common/request.h"
 
@@ -101,14 +102,14 @@ void fill_params(directive_t * directive) {
     case DIR_THEAD_STOP:
         directive->id = get_size_t("id");
         break;
+    case DIR_HALT:
+        break;
     case DIR_THREAD_CONTINUE:
         directive->id = get_size_t("id");
         break;
     case DIR_THREAD_INCREASE_CAPACITY:
         directive->id       = get_size_t("id");
         directive->capacity = get_size_t("increase amount");
-        break;
-    case DIR_HALT:
         break;
     default:
         break;
@@ -138,7 +139,7 @@ void print_result(const ssize_t result) {
     }
 }
 
-unsigned char should_end(const directive_t * const directive, const ssize_t result) {
+inline bool should_end(const directive_t * const directive, const ssize_t result) {
     return (directive->dir == DIR_HALT) && (result == DIRECTIVE_SUCCESS);
 }
 
@@ -241,23 +242,23 @@ void print_test(const test_t * const test) {
     }
 }
 
-unsigned char fill_test(test_t * const test, FILE * file) {
+bool fill_test(test_t * const test, FILE * file) {
     memset((void *)test, 0, sizeof(test_t));
 
     if (fscanf(file, "%hhu ", &(test->request.operation)) != 1) {
-        return 0;
+        return false;
     }
 
     for (int i = 0; i < MAX_ARGUMENTS; ++i) {
         if (fscanf(file, "%ld ", &(test->request.arguments[i])) != 1)
-            return 0;
+            return false;
     }
     if (fscanf(file, "%ld", &(test->expected_answer)) != 1) {
-        return 0;
+        return false;
     }
 
     fscanf(file, "\n");
-    return 1;
+    return true;
 }
 
 void print_summary(const int count, const int passed) {
