@@ -9,6 +9,7 @@ EXE :=	server client admin
 # Directory paths: source, common, build and artefacts
 SRC_DIR 	:= ./src
 CMN_DIR 	:= $(SRC_DIR)/common
+SRV_DIR		:= $(SRC_DIR)/server
 BUILD_ROOT	:= ./build
 RLS_DIR 	:= $(BUILD_ROOT)/release
 DBG_DIR		:= $(BUILD_ROOT)/debug
@@ -98,11 +99,27 @@ $(OBJ_DIR)/directive.o:	$(CMN_DIR)/directive.c $(CMN_DIR)/directive.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/server_helper.o:	$(SRC_DIR)/server_helper.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRC_DIR)/server_helper.h
+$(OBJ_DIR)/admin_handler.o: $(SRV_DIR)/admin_handler.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/server.o:	$(SRC_DIR)/server.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRC_DIR)/server_helper.h
+$(OBJ_DIR)/sr_handler.o: $(SRV_DIR)/sr_handler.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+	@echo "[CC]      $@"
+	@$(CC) $(CFLAGS) $< -o $@
+
+$(OBJ_DIR)/lb.o: $(SRV_DIR)/lb.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+	@echo "[CC]      $@"
+	@$(CC) $(CFLAGS) $< -o $@
+
+$(OBJ_DIR)/worker.o: $(SRV_DIR)/worker.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+	@echo "[CC]      $@"
+	@$(CC) $(CFLAGS) $< -o $@
+
+$(OBJ_DIR)/helper.o: $(SRV_DIR)/helper.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+	@echo "[CC]      $@"
+	@$(CC) $(CFLAGS) $< -o $@
+
+$(OBJ_DIR)/server.o:	$(SRV_DIR)/server.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
@@ -114,7 +131,7 @@ $(OBJ_DIR)/client.o:	$(SRC_DIR)/client.c $(CMN_DIR)/request.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(BLD_DIR)/server:	$(OBJ_DIR)/server.o $(OBJ_DIR)/request.o $(OBJ_DIR)/queue.o $(OBJ_DIR)/directive.o $(OBJ_DIR)/server_helper.o
+$(BLD_DIR)/server:	$(OBJ_DIR)/server.o $(OBJ_DIR)/request.o $(OBJ_DIR)/queue.o $(OBJ_DIR)/directive.o $(OBJ_DIR)/admin_handler.o $(OBJ_DIR)/sr_handler.o $(OBJ_DIR)/lb.o $(OBJ_DIR)/worker.o $(OBJ_DIR)/helper.o
 	@echo "[LD]      $@"
 	@$(CC) $(LFLAGS) $^ -o $@
 
