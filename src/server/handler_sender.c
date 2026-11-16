@@ -14,7 +14,7 @@ static inline void send_processed_request(const request_t * const request, const
 
 void sender(queue_t * const pqueue, const int server_socket) {
     request_t * request;
-    while (1) {
+    while (true) {
         request = dequeue(pqueue);
 
         if (!request) {

@@ -112,11 +112,11 @@ $(OBJ_DIR)/handler_reciever.o: $(SRV_DIR)/handler_reciever.c $(CMN_DIR)/request.
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/lb.o: $(SRV_DIR)/lb.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/load_balancer.o: $(SRV_DIR)/load_balancer.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/worker.o: $(SRV_DIR)/worker.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/handler_worker.o: $(SRV_DIR)/handler_worker.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
@@ -136,7 +136,7 @@ $(OBJ_DIR)/client.o:	$(SRC_DIR)/client.c $(CMN_DIR)/request.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(BLD_DIR)/server:	$(OBJ_DIR)/server.o $(OBJ_DIR)/request.o $(OBJ_DIR)/queue.o $(OBJ_DIR)/directive.o $(OBJ_DIR)/handler_admin.o $(OBJ_DIR)/handler_sender.o $(OBJ_DIR)/handler_reciever.o $(OBJ_DIR)/lb.o $(OBJ_DIR)/worker.o $(OBJ_DIR)/helper.o
+$(BLD_DIR)/server:	$(OBJ_DIR)/server.o $(OBJ_DIR)/request.o $(OBJ_DIR)/queue.o $(OBJ_DIR)/directive.o $(OBJ_DIR)/handler_admin.o $(OBJ_DIR)/handler_sender.o $(OBJ_DIR)/handler_reciever.o $(OBJ_DIR)/handler_worker.o $(OBJ_DIR)/load_balancer.o $(OBJ_DIR)/helper.o
 	@echo "[LD]      $@"
 	@$(CC) $(LFLAGS) $^ -o $@
 

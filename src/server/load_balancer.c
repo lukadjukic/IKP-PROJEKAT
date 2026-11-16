@@ -1,7 +1,5 @@
 #include "server_helper.h"
 
-#pragma region load_balancer
-
 static inline unsigned char is_valid_id(const int id, const size_t workers_count) {
     return (id >= 0) && ((size_t)id < workers_count);
 }
@@ -66,5 +64,3 @@ void load_balancer(queue_t * const input, queue_t * const worker_queues) {
     balance(input, worker_queues, WORKER_NUMBER);
     deregister_to_worker_queues(worker_queues, WORKER_NUMBER);
 }
-
-#pragma endregion
