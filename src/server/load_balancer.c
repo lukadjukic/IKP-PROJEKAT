@@ -41,8 +41,8 @@ static inline void balance(queue_t * const input, queue_t * const worker_queues,
     }
 }
 
-void load_balancer(queue_t * const input, queue_t * const worker_queues) {
-    register_to_worker_queues(worker_queues, WORKER_NUMBER);
-    balance(input, worker_queues, WORKER_NUMBER);
-    deregister_to_worker_queues(worker_queues, WORKER_NUMBER);
+void load_balancer(queue_t * const input, queue_t * const worker_queues, const size_t worker_count) {
+    register_to_worker_queues(worker_queues, worker_count);
+    balance(input, worker_queues, worker_count);
+    deregister_to_worker_queues(worker_queues, worker_count);
 }

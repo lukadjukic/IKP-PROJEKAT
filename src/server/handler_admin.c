@@ -185,8 +185,8 @@ static void communicate_with_admins(queue_t * worker_queues, size_t worker_count
     }
 }
 
-void admin(queue_t * const worker_queues, const size_t worker_count, coordination_t * coordination) {
-    int listener_socket = init_listener_socket(LISTENER_PORT);
+void admin(queue_t * const worker_queues, const size_t worker_count, coordination_t * coordination, const int listener_port) {
+    int listener_socket = init_listener_socket(listener_port);
 
     if (is_invalid_socket(listener_socket)) {
         handle_halt(coordination);

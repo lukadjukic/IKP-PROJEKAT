@@ -12,9 +12,6 @@
 
 #define INVALID_SOCKET  (-1)
 #define BINDING_FAILURE (-2)
-#define SERVER_PORT     (11000)
-#define LISTENER_PORT   (11001)
-#define WORKER_NUMBER   (5)
 
 typedef enum coordination_flags_t {
     COORD_START = 0x01,
@@ -32,11 +29,11 @@ typedef enum {
     CONNECTION_END_HALT    = 2,
 } connection_status_t;
 
-void reciever(queue_t * const pqueue, coordination_t * const coordination, const int server_socket);
+void reciever(queue_t * const pqueue, coordination_t * const coordination, const int server_socket, const int server_port);
 void sender(queue_t * const pqueue, const int server_socket);
-void load_balancer(queue_t * const input, queue_t * const worker_queues);
-void admin(queue_t * const worker_queues, const size_t worker_count, coordination_t * coordination);
-void worker(queue_t * const input, queue_t * const output, const int id, const bool * primes, size_t n);
+void load_balancer(queue_t * const input, queue_t * const worker_queues, const size_t worker_count);
+void admin(queue_t * const worker_queues, const size_t worker_count, coordination_t * coordination, const int listener_port);
+void worker(queue_t * const input, queue_t * const output, const int id, const bool * primes, const size_t n);
 
 ssize_t handle_halt(coordination_t * const coordination);
 void    sieve_of_erathostenes(bool * primes, size_t n);

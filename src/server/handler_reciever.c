@@ -76,8 +76,8 @@ static void recieve_requests(queue_t * const pqueue, coordination_t * const coor
     }
 }
 
-void reciever(queue_t * const pqueue, coordination_t * const coordination, const int server_socket) {
-    printf("[DEBUG] Server listening on port: %u ...\n", SERVER_PORT);
+void reciever(queue_t * const pqueue, coordination_t * const coordination, const int server_socket, const int server_port) {
+    printf("[DEBUG] Server listening on port: %d ...\n", server_port);
     register_producer(pqueue);
     recieve_requests(pqueue, coordination, server_socket);
     deregister_producer(pqueue);

@@ -1,5 +1,8 @@
 #include "server_helper.h"
-#define N 1000000
+#define N             (1000000)
+#define WORKER_NUMBER (5)
+#define SERVER_PORT   (11000)
+#define LISTENER_PORT (11001)
 bool primes[N];
 
 typedef struct arguments_t {
@@ -44,7 +47,7 @@ void mthread_join(mthread_t * thread) {
 void * w_reciever(void * arg) {
     struct arguments_t * arguments = (struct arguments_t *)arg;
     printf("[DEBUG] Reciever thread started.\n");
-    reciever(arguments->output, arguments->coordination, (int)arguments->num);
+    reciever(arguments->output, arguments->coordination, (int)arguments->num, (int)SERVER_PORT);
     printf("[DEBUG] Reciever thread finished.\n");
     return NULL;
 }
@@ -52,7 +55,7 @@ void * w_reciever(void * arg) {
 void * w_load_balancer(void * arg) {
     struct arguments_t * arguments = (struct arguments_t *)arg;
     printf("[DEBUG] Load balancer thread started.\n");
-    load_balancer(arguments->input, arguments->output);
+    load_balancer(arguments->input, arguments->output, arguments->num);
     printf("[DEBUG] Load balancer thread finished.\n");
     return NULL;
 }
@@ -61,7 +64,7 @@ void * w_worker(void * arg) {
     struct arguments_t * arguments = (struct arguments_t *)arg;
     int                  i         = (int)arguments->num;
     printf("[DEBUG] Worker id: %d started.\n", i);
-    worker((arguments->input) + i, arguments->output, i, primes, N - 1);
+    worker((arguments->input) + i, arguments->output, i, primes, (size_t)N - 1);
     printf("[DEBUG] Worker id: %d finished.\n", i);
     return NULL;
 }
@@ -77,7 +80,7 @@ void * w_sender(void * arg) {
 void * w_admin(void * arg) {
     arguments_t * arguments = (arguments_t *)arg;
     printf("[DEBUG] Admin thread started.\n");
-    admin(arguments->input, arguments->num, arguments->coordination);
+    admin(arguments->input, arguments->num, arguments->coordination, (int)LISTENER_PORT);
     printf("[DEBUG] Admin thread finished.\n");
     return NULL;
 }
@@ -109,7 +112,7 @@ void free_resources(coordination_t * coordinate, queue_t * reciever_queue, queue
 
 void init_args(arguments_t * reciever_args, arguments_t * load_balancer_args, arguments_t * worker_args, arguments_t * sender_args, arguments_t * admin_args, size_t worker_count, int main_socket, coordination_t * coordination, queue_t * reciever_queue, queue_t * sender_queue, queue_t * worker_queues) {
     arguments_t r_args = {NULL, reciever_queue, main_socket, coordination};
-    arguments_t l_args = {reciever_queue, worker_queues, 0, NULL};
+    arguments_t l_args = {reciever_queue, worker_queues, (ssize_t)worker_count, NULL};
     arguments_t s_args = {sender_queue, NULL, main_socket, NULL};
     arguments_t a_args = {worker_queues, NULL, (ssize_t)worker_count, coordination};
 
