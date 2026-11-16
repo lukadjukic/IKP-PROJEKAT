@@ -35,7 +35,7 @@ static inline ssize_t find_largest(const ssize_t * arguments, bool * is_eliminat
 }
 
 //  Returns the index of the largest prime or -1 if there are none or -2 if the largest prime is larger than the upper sealing N
-ssize_t find_largest_prime(const ssize_t * const arguments, const bool * primes, size_t n) {
+static ssize_t find_largest_prime(const ssize_t * const arguments, const bool * primes, size_t n) {
     size_t argument_count               = MAX_ARGUMENTS;
     bool   is_eliminated[MAX_ARGUMENTS] = {false};
 
