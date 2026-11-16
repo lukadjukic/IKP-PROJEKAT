@@ -139,7 +139,7 @@ void print_result(const ssize_t result) {
     }
 }
 
-inline bool should_end(const directive_t * const directive, const ssize_t result) {
+static inline bool should_end(const directive_t * const directive, const ssize_t result) {
     return (directive->dir == DIR_HALT) && (result == DIRECTIVE_SUCCESS);
 }
 
@@ -198,20 +198,20 @@ int create_socket() {
     return client_socket;
 }
 
-int send_request_recieve_id(request_t * const request, const sockaddr_in_t * server_address, const int client_socket) {
+bool send_request_recieve_id(request_t * const request, const sockaddr_in_t * server_address, const int client_socket) {
     socklen_t address_length = sizeof(sockaddr_t);
 
     if (sendto(client_socket, request, sizeof(request_t), 0, (sockaddr_t *)server_address, sizeof(sockaddr_t)) < 0) {
         perror("Send failed");
-        return -1;
+        return false;
     }
 
     if (recvfrom(client_socket, &(request->id), sizeof(size_t), 0, (sockaddr_t *)server_address, &address_length) < 0) {
         perror("Recieving id failed.\n");
-        return -1;
+        return false;
     }
 
-    return 1;
+    return true;
 }
 
 void recieve_response(request_t * const request, const sockaddr_in_t * const server_address, const int client_socket) {
@@ -289,7 +289,7 @@ void test_primes(const char * const in_filename) {
     int tests_passed = 0;
 
     while (fill_test(&test, in_file)) {
-        if (send_request_recieve_id(&(test.request), &server_address, sock) < 0) {
+        if (send_request_recieve_id(&(test.request), &server_address, sock) == false) {
             break;
         }
         recieve_response(&(test.request), &server_address, sock);

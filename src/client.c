@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -9,12 +10,12 @@
 #define SERVER_PORT 11000
 #define SERVER_IP   "127.0.0.1"
 
-int           create_socket(int domain, int port, int protocol);
-void          set_server_address(sockaddr_in_t * address, const sa_family_t family, const unsigned short port, const char * const server_ip);
-int           send_request_recieve_id(request_t * const request, const sockaddr_in_t * server_address, const int client_socket);
-void          recieve_response(request_t * const request, const sockaddr_in_t * const server_address, const int client_socket);
-unsigned char fill_request(request_t * const request, FILE * file);
-void          print_response(const request_t * const request, FILE * file);
+int  create_socket(int domain, int port, int protocol);
+void set_server_address(sockaddr_in_t * address, const sa_family_t family, const unsigned short port, const char * const server_ip);
+int  send_request_recieve_id(request_t * const request, const sockaddr_in_t * server_address, const int client_socket);
+void recieve_response(request_t * const request, const sockaddr_in_t * const server_address, const int client_socket);
+bool fill_request(request_t * const request, FILE * file);
+void print_response(const request_t * const request, FILE * file);
 
 int main() {
     sockaddr_in_t server_address;
@@ -55,7 +56,6 @@ int create_socket(int domain, int type, int protocol) {
 }
 
 void set_server_address(sockaddr_in_t * address, const sa_family_t family, const unsigned short port, const char * const server_ip) {
-
     address->sin_family      = family;
     address->sin_port        = htons(port);
     address->sin_addr.s_addr = inet_addr(server_ip);
@@ -88,21 +88,21 @@ void recieve_response(request_t * const request, const sockaddr_in_t * const ser
     print_request(request);
 }
 
-unsigned char fill_request(request_t * const request, FILE * file) {
+bool fill_request(request_t * const request, FILE * file) {
     memset((void *)request, 0, sizeof(request_t));
 
     if (fscanf(file, "%hhu ", &(request->operation)) != 1) {
-        return 0;
+        return false;
     }
 
     for (int i = 0; i < MAX_ARGUMENTS; ++i) {
         if (feof(file))
-            return 0;
+            return false;
         if (fscanf(file, "%ld ", &(request->arguments[i])) != 1)
-            return 0;
+            return false;
     }
 
-    return 1;
+    return true;
 }
 
 void print_response(const request_t * const request, FILE * file) {
