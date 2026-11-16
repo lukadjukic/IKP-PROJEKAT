@@ -188,7 +188,7 @@ static void communicate_with_admins(arguments_t * const arguments, const int lis
 void admin(arguments_t * const arguments) {
     int listener_socket = init_listener_socket(LISTENER_PORT);
 
-    if (listener_socket < 0) {
+    if (is_invalid_socket(listener_socket)) {
         handle_halt(arguments->coordination);
         return;
     }
