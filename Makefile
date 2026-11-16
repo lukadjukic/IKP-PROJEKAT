@@ -76,7 +76,7 @@ endif
 else
 BLD_DIR := $(RLS_DIR)
 OBJ_DIR := $(BLD_DIR)/artefacts
-CFLAGS  := $(CFLAGS_COMMON) -O1
+CFLAGS  := $(CFLAGS_COMMON) -O2
 LFLAGS	:= $(LFLAGS_COMMON)
 endif
 

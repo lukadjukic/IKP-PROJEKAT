@@ -23,7 +23,7 @@ size_t select_worker(queue_t * worker_queues, const size_t workers_count) {
                 return i;
             }
         }
-        sleep(1);        
+        sleep(1);
     }
 }
 

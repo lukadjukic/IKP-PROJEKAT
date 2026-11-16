@@ -155,8 +155,8 @@ int eliminate_positive_not_primes(const ssize_t * const arguments, unsigned char
 
     pthread_mutex_lock(&mut);
     if ((size_t)max > max_prime) {
-        sieve_of_erathostenes(N, primes);
-        max_prime = N;
+        sieve_of_erathostenes(N - 1, primes);
+        max_prime = N - 1;
     }
     pthread_mutex_unlock(&mut);
 
