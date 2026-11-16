@@ -99,32 +99,32 @@ $(OBJ_DIR)/directive.o:	$(CMN_DIR)/directive.c $(CMN_DIR)/directive.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/handler_admin.o: $(SRV_DIR)/handler_admin.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/handler_admin.o: $(SRV_DIR)/handler_admin.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_internals.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
 
-$(OBJ_DIR)/handler_sender.o: $(SRV_DIR)/handler_sender.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/handler_sender.o: $(SRV_DIR)/handler_sender.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_internals.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/handler_reciever.o: $(SRV_DIR)/handler_reciever.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/handler_reciever.o: $(SRV_DIR)/handler_reciever.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_internals.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/load_balancer.o: $(SRV_DIR)/load_balancer.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/load_balancer.o: $(SRV_DIR)/load_balancer.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_internals.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/handler_worker.o: $(SRV_DIR)/handler_worker.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/handler_worker.o: $(SRV_DIR)/handler_worker.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_internals.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/helper.o: $(SRV_DIR)/helper.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/helper.o: $(SRV_DIR)/helper.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_internals.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/server.o:	$(SRV_DIR)/server.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_helper.h
+$(OBJ_DIR)/server.o:	$(SRV_DIR)/server.c $(CMN_DIR)/request.h $(CMN_DIR)/queue.h $(CMN_DIR)/directive.h $(SRV_DIR)/server_internals.h
 	@echo "[CC]      $@"
 	@$(CC) $(CFLAGS) $< -o $@
 

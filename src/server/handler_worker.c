@@ -1,4 +1,4 @@
-#include "server_helper.h"
+#include "server_internals.h"
 
 static inline bool sealing_exeeded(const ssize_t * arguments, size_t argument_count, size_t n) {
     for (size_t i = 0; i < argument_count; i++) {

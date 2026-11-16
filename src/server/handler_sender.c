@@ -1,4 +1,4 @@
-#include "server_helper.h"
+#include "server_internals.h"
 
 static inline void send_processed_request(const request_t * const request, const int server_socket) {
     ssize_t      sent_length;

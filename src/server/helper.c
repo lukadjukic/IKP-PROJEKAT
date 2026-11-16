@@ -1,4 +1,4 @@
-#include "server_helper.h"
+#include "server_internals.h"
 
 static void init_socket_address(sockaddr_in_t * const server_address, const unsigned short port) {
     memset(server_address, 0, sizeof(sockaddr_in_t));

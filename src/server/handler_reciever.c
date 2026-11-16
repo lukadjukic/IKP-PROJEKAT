@@ -1,4 +1,4 @@
-#include "server_helper.h"
+#include "server_internals.h"
 
 static inline bool program_is_running(coordination_t * const coordination) {
     pthread_mutex_lock(&(coordination->lock));

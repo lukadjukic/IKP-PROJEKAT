@@ -1,4 +1,4 @@
-#include "server_helper.h"
+#include "server_internals.h"
 
 static inline void register_to_worker_queues(queue_t * const queues, const size_t workers_count) {
     for (size_t i = 0; i < workers_count; i++) {
