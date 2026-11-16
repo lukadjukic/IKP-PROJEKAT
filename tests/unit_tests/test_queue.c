@@ -69,11 +69,11 @@ void test_increment_queue_capacity_unlimited(void)
 void test_enqueue(void)
 {
     const size_t n = 10;
-    request_t * request = malloc(sizeof(request_t));
     register_producer(&tq);
-    for (size_t i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++) {
+        request_t * request = malloc(sizeof(request_t));
         enqueue(&tq, request);
-    free(request);
+    }
 
     TEST_ASSERT_EQUAL_size_t(n, tq.size);
     TEST_ASSERT_NOT_EQUAL_PTR(NULL, tq.first);
@@ -86,14 +86,13 @@ void test_enqueue(void)
 void test_dequeue(void)
 {
     const size_t n = 10;
-    request_t * request = malloc(sizeof(request_t));
-
-    register_producer(&tq);
-    for (size_t i = 0; i < n; i++)
-        enqueue(&tq, request);
     
-    free(request);
-
+    register_producer(&tq);
+    for (size_t i = 0; i < n; i++) {
+        request_t * request = malloc(sizeof(request_t));
+        enqueue(&tq, request);        
+    }
+    
     for (size_t i = 0; i < n; i++)
         free(dequeue(&tq));
     
@@ -105,12 +104,12 @@ void test_dequeue(void)
 void test_enqueue_dequeue(void)
 {
     const size_t n = 10;
-    request_t * request = malloc(sizeof(request_t));
     size_t ids[n];
     size_t expected[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};  
     
     register_producer(&tq);
     for (size_t i = 0; i < n; i++){
+        request_t * request = malloc(sizeof(request_t));
         request->id = i;
         enqueue(&tq, request);
     }
