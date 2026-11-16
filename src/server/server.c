@@ -1,4 +1,6 @@
 #include "server_helper.h"
+#define N 1000000
+bool primes[N];
 
 typedef struct arguments_t {
     queue_t *        input;
@@ -59,7 +61,7 @@ void * w_worker(void * arg) {
     struct arguments_t * arguments = (struct arguments_t *)arg;
     int                  i         = (int)arguments->num;
     printf("[DEBUG] Worker id: %d started.\n", i);
-    worker((arguments->input) + i, arguments->output, i);
+    worker((arguments->input) + i, arguments->output, i, primes, N - 1);
     printf("[DEBUG] Worker id: %d finished.\n", i);
     return NULL;
 }
@@ -93,7 +95,7 @@ void join_threads(mthread_t * reciever, mthread_t * load_balancer, mthread_t * s
     }
 }
 
-void free_resources(coordination_t * coordinate, queue_t * reciever_queue, queue_t * sender_queue, queue_t * worker_queues, size_t worker_count, mutex_t * mut, int main_socket) {
+void free_resources(coordination_t * coordinate, queue_t * reciever_queue, queue_t * sender_queue, queue_t * worker_queues, size_t worker_count, int main_socket) {
     delete_coordination(coordinate);
     delete_queue(reciever_queue);
     delete_queue(sender_queue);
@@ -101,7 +103,6 @@ void free_resources(coordination_t * coordinate, queue_t * reciever_queue, queue
         delete_queue(worker_queues + i);
     }
 
-    pthread_mutex_destroy(mut);
     shutdown(main_socket, SHUT_RDWR);
     close(main_socket);
 }
@@ -160,7 +161,7 @@ bool spawn_threads(mthread_t * reciever_thread, mthread_t * load_balancer_thread
     return true;
 }
 
-bool initialize(coordination_t * coordination, int * main_socket, mutex_t * mut, queue_t * reciever_queue, queue_t * sender_queue, queue_t * worker_queues, arguments_t * reciever_args, arguments_t * load_balancer_args, arguments_t * worker_args, arguments_t * sender_args, arguments_t * admin_args, mthread_t * reciever_thread, mthread_t * load_balancer_thread, mthread_t * worker_threads, mthread_t * sender_thread, mthread_t * admin_thread, size_t worker_count) {
+bool initialize(coordination_t * coordination, int * main_socket, queue_t * reciever_queue, queue_t * sender_queue, queue_t * worker_queues, arguments_t * reciever_args, arguments_t * load_balancer_args, arguments_t * worker_args, arguments_t * sender_args, arguments_t * admin_args, mthread_t * reciever_thread, mthread_t * load_balancer_thread, mthread_t * worker_threads, mthread_t * sender_thread, mthread_t * admin_thread, size_t worker_count) {
     *main_socket = init_socket(SOCK_DGRAM, 0, SERVER_PORT);
     if (*main_socket < 0) {
         perror("[INIT] Socket initialization failed.");
@@ -175,15 +176,14 @@ bool initialize(coordination_t * coordination, int * main_socket, mutex_t * mut,
         init_queue(worker_queues + i, QUEUE_CAPACITY_DEFAULT);
     }
 
-    pthread_mutex_init(mut, NULL);
-
     init_args(reciever_args, load_balancer_args, worker_args, sender_args, admin_args, worker_count, *main_socket, coordination, reciever_queue, sender_queue, worker_queues);
+    sieve_of_erathostenes(primes, N - 1);
     int success = spawn_threads(reciever_thread, load_balancer_thread, worker_threads, sender_thread, admin_thread, reciever_args, load_balancer_args, worker_args, sender_args, admin_args, worker_count);
 
     if (!success) {
         handle_halt(coordination);
         join_threads(reciever_thread, load_balancer_thread, sender_thread, admin_thread, worker_threads, worker_count);
-        free_resources(coordination, reciever_queue, sender_queue, worker_queues, worker_count, mut, *main_socket);
+        free_resources(coordination, reciever_queue, sender_queue, worker_queues, worker_count, *main_socket);
         return false;
     }
 
@@ -198,7 +198,7 @@ int main() {
     arguments_t    reciever_args, load_balancer_args, sender_args, admin_args, worker_args[WORKER_NUMBER];
 
     // Initializing resources. If anything fails, the function cleans up the rest.
-    if (!initialize(&coordination, &main_socket, &mut, &reciever_queue, &sender_queue, worker_queues, &reciever_args, &load_balancer_args, worker_args, &sender_args, &admin_args, &reciever_thread, &load_balancer_thread, worker_threads, &sender_thead, &admin_thread, WORKER_NUMBER)) {
+    if (!initialize(&coordination, &main_socket, &reciever_queue, &sender_queue, worker_queues, &reciever_args, &load_balancer_args, worker_args, &sender_args, &admin_args, &reciever_thread, &load_balancer_thread, worker_threads, &sender_thead, &admin_thread, WORKER_NUMBER)) {
         return -1;
     }
 
@@ -206,7 +206,7 @@ int main() {
     join_threads(&reciever_thread, &load_balancer_thread, &sender_thead, &admin_thread, worker_threads, WORKER_NUMBER);
 
     // Freeing resources
-    free_resources(&coordination, &reciever_queue, &sender_queue, worker_queues, WORKER_NUMBER, &mut, main_socket);
+    free_resources(&coordination, &reciever_queue, &sender_queue, worker_queues, WORKER_NUMBER, main_socket);
 
     return 0;
 }

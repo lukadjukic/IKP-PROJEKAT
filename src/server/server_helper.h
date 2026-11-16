@@ -16,8 +16,6 @@
 #define LISTENER_PORT   (11001)
 #define WORKER_NUMBER   (5)
 
-extern mutex_t mut;
-
 typedef enum coordination_flags_t {
     COORD_START = 0x01,
     COORD_HALT  = 0x02
@@ -38,9 +36,10 @@ void reciever(queue_t * const pqueue, coordination_t * const coordination, const
 void sender(queue_t * const pqueue, const int server_socket);
 void load_balancer(queue_t * const input, queue_t * const worker_queues);
 void admin(queue_t * const worker_queues, const size_t worker_count, coordination_t * coordination);
-void worker(queue_t * const input, queue_t * const output, const int id);
+void worker(queue_t * const input, queue_t * const output, const int id, const bool * primes, size_t n);
 
 ssize_t handle_halt(coordination_t * const coordination);
+void    sieve_of_erathostenes(bool * primes, size_t n);
 
 int  init_socket(const int type, const int protocol, const unsigned short port);
 void init_coordination(coordination_t * const coordination);
