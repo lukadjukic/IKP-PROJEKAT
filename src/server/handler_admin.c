@@ -143,7 +143,7 @@ static int connect_admin(const int listener_socket) {
     return admin_socket;
 }
 
-static connection_status_t handle_single_directive(arguments_t * const arguments, const int admin_socket) {
+static connection_status_t handle_single_directive(queue_t * worker_queues, size_t worker_count, coordination_t * coordination, const int admin_socket) {
     directive_t buffer;
 
     ssize_t recieved_length = recv(admin_socket, &buffer, sizeof(directive_t), 0);
@@ -157,13 +157,13 @@ static connection_status_t handle_single_directive(arguments_t * const arguments
         return CONNECTION_PERSIST;
     }
 
-    ssize_t result = handle_directive(arguments->input, arguments->num, arguments->coordination, &buffer);
+    ssize_t result = handle_directive(worker_queues, worker_count, coordination, &buffer);
     send(admin_socket, &result, sizeof(ssize_t), 0);
 
     return should_halt(result, buffer.dir) ? CONNECTION_END_HALT : CONNECTION_PERSIST;
 }
 
-static void communicate_with_admins(arguments_t * const arguments, const int listener_socket) {
+static void communicate_with_admins(queue_t * worker_queues, size_t worker_count, coordination_t * coordination, const int listener_socket) {
     while (true) {
         int admin_socket = connect_admin(listener_socket);
         if (is_invalid_socket(admin_socket)) {
@@ -172,7 +172,7 @@ static void communicate_with_admins(arguments_t * const arguments, const int lis
 
         connection_status_t connection_status;
         while (true) {
-            connection_status = handle_single_directive(arguments, admin_socket);
+            connection_status = handle_single_directive(worker_queues, worker_count, coordination, admin_socket);
             if (connection_status != CONNECTION_PERSIST) {
                 break;
             }
@@ -185,15 +185,15 @@ static void communicate_with_admins(arguments_t * const arguments, const int lis
     }
 }
 
-void admin(arguments_t * const arguments) {
+void admin(queue_t * const worker_queues, const size_t worker_count, coordination_t * coordination) {
     int listener_socket = init_listener_socket(LISTENER_PORT);
 
     if (is_invalid_socket(listener_socket)) {
-        handle_halt(arguments->coordination);
+        handle_halt(coordination);
         return;
     }
 
-    communicate_with_admins(arguments, listener_socket);
+    communicate_with_admins(worker_queues, worker_count, coordination, listener_socket);
 
     shutdown(listener_socket, SHUT_RDWR);
     close(listener_socket);

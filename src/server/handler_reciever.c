@@ -11,22 +11,22 @@ static inline bool would_block(const ssize_t recieved_length) {
     return (recieved_length < 0) && (errno == EWOULDBLOCK || errno == EAGAIN);
 }
 
-static inline int recieve_request(request_t * const buffer, sockaddr_in_t * const client_address, socklen_t * const address_length, const int server_socket) {
+static inline bool recieve_request(request_t * const buffer, sockaddr_in_t * const client_address, socklen_t * const address_length, const int server_socket) {
     const ssize_t recieved_length = recvfrom(server_socket, buffer, sizeof(request_t), MSG_DONTWAIT, (sockaddr_t *)client_address, address_length);
 
     if (would_block(recieved_length)) {
         // printf("No requests to process. Sleeping ...\n");
         sleep(1);
-        return RECIEVE_FAILURE;
+        return false;
     } else if (recieved_length < 0) {
         perror("Recieve failed.\n");
-        return RECIEVE_FAILURE;
+        return false;
     } else if ((size_t)recieved_length < sizeof(request_t)) {
         perror("Recieved request invalid format.\n");
-        return RECIEVE_FAILURE;
+        return false;
     }
 
-    return RECIEVE_SUCCESS;
+    return true;
 }
 
 static inline void fill_request(request_t * const prequest, const sockaddr_in_t * const client_address, const size_t id) {
@@ -43,18 +43,18 @@ static inline void send_id(const int server_socket, const size_t * counter, cons
     sendto(server_socket, counter, sizeof(size_t), 0, (sockaddr_t *)client_address, sizeof(sockaddr_t));
 }
 
-static unsigned char recieved_valid_request(request_t * const prequest, size_t * counter, const int server_socket) {
+static bool recieved_valid_request(request_t * const prequest, size_t * counter, const int server_socket) {
     sockaddr_in_t client_address;
     socklen_t     address_length = sizeof(sockaddr_in_t);
 
     if (!recieve_request(prequest, &client_address, &address_length, server_socket)) {
-        return RECIEVE_FAILURE;
+        return false;
     }
 
     fill_request(prequest, &client_address, ++(*counter));
     send_id(server_socket, counter, &client_address);
     printf("[Reciever] Client: %s:%u sent request. Assigned id: %lu\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port), prequest->id);
-    return RECIEVE_SUCCESS;
+    return true;
 }
 
 static void recieve_requests(queue_t * const pqueue, coordination_t * const coordination, const int server_socket) {

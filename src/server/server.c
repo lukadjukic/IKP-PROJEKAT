@@ -1,5 +1,56 @@
 #include "server_helper.h"
-//  Wrapper functions
+#define QUEUE_NUMBER            (WORKER_NUMBER + 2)
+#define THREAD_NUMBER           (WORKER_NUMBER + 3)
+
+typedef struct threads_t {
+    pthread_t * reciever_thread;
+    pthread_t * load_balancer_thread;
+    pthread_t * sender_thread;
+    pthread_t * admin_thread;
+    pthread_t * worker_threads;
+    size_t      workers_count;
+} threads_t;
+
+typedef struct arguments_t {
+    queue_t *        input;
+    queue_t *        output;
+    ssize_t          num;
+    coordination_t * coordination;
+} arguments_t;
+
+#pragma region queues_and_threads
+
+void init_queues(queue_t * const queues, const unsigned short queues_count) {
+    for (int i = 0; i < queues_count; ++i) {
+        if (i < 2) {
+            init_queue(queues + i, QUEUE_CAPACITY_UNLIMITED);
+        } else {
+            init_queue(queues + i, QUEUE_CAPACITY_DEFAULT);
+        }
+    }
+}
+
+void delete_all_queues(queue_t * const queues, const unsigned short queues_count) {
+    for (int i = 0; i < queues_count; ++i) {
+        delete_queue(queues + i);
+    }
+}
+
+void join_all_threads(const threads_t * const all_threads) {
+    pthread_join(*(all_threads->reciever_thread), NULL);
+    pthread_join(*(all_threads->load_balancer_thread), NULL);
+    pthread_join(*(all_threads->sender_thread), NULL);
+    pthread_join(*(all_threads->admin_thread), NULL);
+
+    for (size_t i = 0; i < all_threads->workers_count; ++i) {
+        pthread_join(all_threads->worker_threads[i], NULL);
+    }
+}
+
+#pragma endregion
+
+#pragma region wrappers
+
 void * w_reciever(void * arg) {
     printf("[DEBUG] Reciever thread started.\n");
     struct arguments_t * arguments = (struct arguments_t *)arg;
@@ -36,10 +87,12 @@ void * w_sender(void * arg) {
 void * w_admin(void * arg) {
     arguments_t * arguments = (arguments_t *)arg;
     printf("[DEBUG] Admin thread started.\n");
-    admin(arguments);
+    admin(arguments->input, arguments->num, arguments->coordination);
     printf("[DEBUG] Admin thread finished.\n");
     return NULL;
 }
+
+#pragma endregion
 
 int create_all_threads(threads_t * const all_threads, const arguments_t * const arguments, const arguments_t * const worker_arguments) {
 

@@ -1,7 +1,5 @@
 #include "server_helper.h"
 
-#pragma region socket_helper
-
 static void init_socket_address(sockaddr_in_t * const server_address, const unsigned short port) {
     memset(server_address, 0, sizeof(sockaddr_in_t));
     server_address->sin_family      = AF_INET;
@@ -49,9 +47,12 @@ int init_socket(const int type, const int protocol, const unsigned short port) {
     return server_socket;
 }
 
-#pragma endregion
-
-#pragma region queues_and_threads
+void safe_dealocalte(void ** ptr) {
+    if (ptr && *ptr) {
+        free(*ptr);
+        *ptr = NULL;
+    }
+}
 
 void init_coordination(coordination_t * const coordination) {
     pthread_mutex_init(&(coordination->lock), NULL);
@@ -62,39 +63,3 @@ void delete_coordination(coordination_t * const coordination) {
     coordination->state = COORD_HALT;
     pthread_mutex_destroy(&(coordination->lock));
 }
-
-void safe_dealocalte(void ** ptr) {
-    if (ptr && *ptr) {
-        free(*ptr);
-        *ptr = NULL;
-    }
-}
-
-void init_queues(queue_t * const queues, const unsigned short queues_count) {
-    for (int i = 0; i < queues_count; ++i) {
-        if (i < 2) {
-            init_queue(queues + i, QUEUE_CAPACITY_UNLIMITED);
-        } else {
-            init_queue(queues + i, QUEUE_CAPACITY_DEFAULT);
-        }
-    }
-}
-
-void delete_all_queues(queue_t * const queues, const unsigned short queues_count) {
-    for (int i = 0; i < queues_count; ++i) {
-        delete_queue(queues + i);
-    }
-}
-
-void join_all_threads(const threads_t * const all_threads) {
-    pthread_join(*(all_threads->reciever_thread), NULL);
-    pthread_join(*(all_threads->load_balancer_thread), NULL);
-    pthread_join(*(all_threads->sender_thread), NULL);
-    pthread_join(*(all_threads->admin_thread), NULL);
-
-    for (size_t i = 0; i < all_threads->workers_count; ++i) {
-        pthread_join(all_threads->worker_threads[i], NULL);
-    }
-}
-
-#pragma endregion
