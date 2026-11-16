@@ -10,12 +10,11 @@
 #include "../common/queue.h"
 #include "../common/directive.h"
 
-#define INVALID_SOCKET          (-1)
-#define BINDING_FAILURE         (-2)
-#define THREAD_CREATION_FAILURE (-3)
-#define SERVER_PORT             (11000)
-#define LISTENER_PORT           (11001)
-#define WORKER_NUMBER           (5)
+#define INVALID_SOCKET  (-1)
+#define BINDING_FAILURE (-2)
+#define SERVER_PORT     (11000)
+#define LISTENER_PORT   (11001)
+#define WORKER_NUMBER   (5)
 
 extern mutex_t mut;
 
