@@ -16,7 +16,6 @@
 #define INVALID_SOCKET          (-1)
 #define BINDING_FAILURE         (-2)
 #define THREAD_CREATION_FAILURE (-3)
-#define LISTENER_MODE_FAILURE   (-4)
 #define BUFFER_SIZE             (1024)
 #define SERVER_PORT             (11000)
 #define LISTENER_PORT           (11001)
@@ -65,17 +64,13 @@ void delete_coordination(coordination_t * const coordination);
 void delete_all_queues(queue_t * const queues, const unsigned short queues_count);
 void join_all_threads(const threads_t * const all_threads);
 void safe_dealocalte(void ** ptr);
+
 void reciever(queue_t * const pqueue, coordination_t * const coordination, const int server_socket);
 void sender(queue_t * const pqueue, const int server_socket);
 void load_balancer(queue_t * const input, queue_t * const worker_queues);
 void admin(arguments_t * const arguments);
 void worker(queue_t * const input, queue_t * const output, const int id);
 
-void    coordinate(coordination_t * const coordination, const coordination_flags_t new_state);
-ssize_t handle_directive(queue_t * const queues, const size_t workers_count, coordination_t * const coordinate, const directive_t * const directive);
 ssize_t handle_halt(coordination_t * const coordination);
-ssize_t handle_thread_stop(queue_t * const queues, const size_t workers_count, const size_t id);
-ssize_t handle_thread_continue(queue_t * const queues, const size_t workers_count, const size_t id);
-ssize_t handle_thread_increase_capacity(queue_t * const queues, const size_t workers_count, const size_t id, const size_t increment);
 
 #endif
