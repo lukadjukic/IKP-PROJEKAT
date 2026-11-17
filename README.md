@@ -1,4 +1,4 @@
-# IKP Projekat  
+# Load balancer  
 ![Language](https://img.shields.io/badge/language-C-blue)
 ![Standard](https://img.shields.io/badge/C-C11-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
